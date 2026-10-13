@@ -13,8 +13,8 @@ android {
         // 29 起 MediaStore 寫入公用目錄不需要儲存權限（docs/SPEC.md §5.D）。
         minSdk = 29
         targetSdk = 36
-        versionCode = 5
-        versionName = "0.4.1"
+        versionCode = 6
+        versionName = "0.4.2"
     }
 
     buildTypes {

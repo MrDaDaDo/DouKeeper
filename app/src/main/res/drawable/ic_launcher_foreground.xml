@@ -1,16 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  App 圖示前景：朝下的「播放」三角形＋托盤線，做成霓虹燈管。
+  App 圖示前景：朝下的「播放」三角形＋托盤線，加上青紅錯位殘影。
 
-  向量圖沒有模糊濾鏡，發光是用同一個形狀疊出來的：
-  外層紫色寬描邊（最淡）→ 桃紅中描邊 → 桃紅窄描邊（較濃）→ 白色燈管核心。
-  越外層越寬越淡，看起來就像光暈往外散。
+  配色照抖音（使用者指定，2026-10-13）：黑底、白色主體、左上青 #25F4EE、右下紅 #FE2C55。
+  符號維持自己的，不用抖音的音符。只適合自用側載——
+  **若日後要公開發佈，這組配色必須換掉**：黑底＋白主體＋青紅錯位是抖音的品牌識別。
 
-  只用描邊、不填色：燈管是空心的線，這也讓它跟單色圖層的實心符號（ic_launcher_monochrome）
-  有區別——那份給 Android 13 主題圖示用。
-
-  安全區：自適應圖示只保證中央直徑 66 的圓不被裁（21–87）。
-  最外層光暈落在約 x 26–82、y 26–85。
+  三層同一個形狀：青色往左上偏、紅色往右下偏、白色在最上面正中央。
+  形狀與 ic_launcher_monochrome.xml 相同（那份給 Android 13 主題圖示用）。
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -18,31 +15,25 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- 三角形 -->
-    <path android:pathData="M36,36 L72,36 L54,62 Z"
-        android:strokeColor="#2EA855F7" android:strokeWidth="15"
-        android:strokeLineJoin="round" />
-    <path android:pathData="M36,36 L72,36 L54,62 Z"
-        android:strokeColor="#4DF43F7F" android:strokeWidth="10"
-        android:strokeLineJoin="round" />
-    <path android:pathData="M36,36 L72,36 L54,62 Z"
-        android:strokeColor="#B3FF4D94" android:strokeWidth="6.5"
-        android:strokeLineJoin="round" />
-    <path android:pathData="M36,36 L72,36 L54,62 Z"
-        android:strokeColor="#FFFFF1F7" android:strokeWidth="3"
-        android:strokeLineJoin="round" />
+    <group android:translateX="-2.2" android:translateY="-2.2">
+        <path android:fillColor="#FF25F4EE" android:strokeColor="#FF25F4EE"
+            android:strokeWidth="7" android:strokeLineJoin="round"
+            android:pathData="M37,36 L71,36 L54,61 Z" />
+        <path android:fillColor="#FF25F4EE"
+            android:pathData="M36.5,70.5 h35 a3.5,3.5 0 0 1 0,7 h-35 a3.5,3.5 0 0 1 0,-7 z" />
+    </group>
 
-    <!-- 托盤線 -->
-    <path android:pathData="M37,74 H71"
-        android:strokeColor="#2EA855F7" android:strokeWidth="15"
-        android:strokeLineCap="round" />
-    <path android:pathData="M37,74 H71"
-        android:strokeColor="#4DF43F7F" android:strokeWidth="10"
-        android:strokeLineCap="round" />
-    <path android:pathData="M37,74 H71"
-        android:strokeColor="#B3FF4D94" android:strokeWidth="6.5"
-        android:strokeLineCap="round" />
-    <path android:pathData="M37,74 H71"
-        android:strokeColor="#FFFFF1F7" android:strokeWidth="3"
-        android:strokeLineCap="round" />
+    <group android:translateX="2.2" android:translateY="2.2">
+        <path android:fillColor="#FFFE2C55" android:strokeColor="#FFFE2C55"
+            android:strokeWidth="7" android:strokeLineJoin="round"
+            android:pathData="M37,36 L71,36 L54,61 Z" />
+        <path android:fillColor="#FFFE2C55"
+            android:pathData="M36.5,70.5 h35 a3.5,3.5 0 0 1 0,7 h-35 a3.5,3.5 0 0 1 0,-7 z" />
+    </group>
+
+    <path android:fillColor="#FFFFFFFF" android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="7" android:strokeLineJoin="round"
+        android:pathData="M37,36 L71,36 L54,61 Z" />
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M36.5,70.5 h35 a3.5,3.5 0 0 1 0,7 h-35 a3.5,3.5 0 0 1 0,-7 z" />
 </vector>
