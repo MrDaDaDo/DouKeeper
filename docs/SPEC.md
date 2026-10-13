@@ -52,7 +52,7 @@
 | 穩定性判斷 | App 記錄每次成敗（`files/attempts.tsv`），畫面顯示最近 50 次成功率 | 失敗時好時壞，密集測試本身會觸發風控，只能靠日常使用累積判斷 |
 | 下載內容 | 每次彈出選單讓使用者勾選 | 可複選：無浮水印影片、有浮水印影片、音軌、圖片（圖文作品才出現） |
 | 預設勾選 | 無浮水印影片（圖文作品則為全部圖片） | 可在設定改成「記住上次的選擇」或「不再詢問，直接下載」 |
-| 下載執行 | WorkManager + 前景通知 | 選完就可以回抖音繼續滑，進度在通知欄 |
+| 下載執行 | **`DownloadCenter`（process 層級佇列）＋ `DownloadService`（前景服務，dataSync）** | 解析留在畫面（需要 WebView、可能要人機驗證）；下載交給背景，切到別的 App 也繼續，通知欄顯示進度，完成後通知點一下開啟。沒用 WorkManager：只需要「撐住 process＋顯示進度」，不需要排程與重開機後續傳 |
 | 存放位置 | MediaStore：`Movies/DouyinVideoDownloader`、`Pictures/DouyinVideoDownloader`、`Music/DouyinVideoDownloader` | 相簿與音樂 App 直接看得到，不需要儲存權限（§5.D） |
 | 音軌 | 從影片**重新封裝**出音訊為 `.m4a`，不轉檔 | 用 `MediaExtractor` + `MediaMuxer`，不引入 FFmpeg（§5.E） |
 | 背景音樂 | 另外下載作品標示的配樂網址（通常是 `.mp3`） | 與「音軌」不同：配樂是原曲，音軌是影片裡實際的聲音（含人聲） |

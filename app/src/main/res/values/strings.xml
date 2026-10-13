@@ -84,4 +84,8 @@
     <string name="settings_language">Language</string>
     <string name="settings_language_desc">Choose the app language in system settings</string>
     <string name="settings_reset_stats">Reset success stats</string>
+    <!-- 通知 -->
+    <string name="notif_channel">Downloads</string>
+    <string name="notif_preparing">Preparing</string>
+    <string name="notif_tap_to_open">Tap to open</string>
 </resources>

@@ -73,4 +73,7 @@
     <string name="settings_language">语言</string>
     <string name="settings_language_desc">在系统设置中选择本 App 的语言</string>
     <string name="settings_reset_stats">重置成功率统计</string>
+    <string name="notif_channel">下载</string>
+    <string name="notif_preparing">准备中</string>
+    <string name="notif_tap_to_open">点一下打开</string>
 </resources>

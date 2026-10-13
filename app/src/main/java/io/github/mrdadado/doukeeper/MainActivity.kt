@@ -1,6 +1,10 @@
 package io.github.mrdadado.doukeeper
 
+import android.Manifest
 import android.content.ClipboardManager
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.result.contract.ActivityResultContracts
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -59,10 +63,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.annotation.StringRes
 import androidx.lifecycle.lifecycleScope
+import io.github.mrdadado.doukeeper.download.DownloadCenter
+import io.github.mrdadado.doukeeper.download.DownloadItem
 import io.github.mrdadado.doukeeper.download.MediaStoreDownloader
-import io.github.mrdadado.doukeeper.download.MediaStoreDownloader.DownloadException
-import io.github.mrdadado.doukeeper.download.MediaStoreDownloader.Kind
-import io.github.mrdadado.doukeeper.download.MediaStoreDownloader.Reason
 import io.github.mrdadado.doukeeper.parse.Aweme
 import io.github.mrdadado.doukeeper.parse.AwemeParser
 import io.github.mrdadado.doukeeper.parse.DetailCapture
@@ -95,31 +98,24 @@ class MainActivity : ComponentActivity() {
         data class Failed(val reason: String) : Phase
     }
 
-    /** 可下載的項目。按鈕上的字與完成後的打勾都靠這個。 */
-    enum class Item(@StringRes val label: Int, @StringRes val short: Int) {
-        NO_WATERMARK(R.string.item_no_watermark, R.string.item_no_watermark_short),
-        WATERMARK(R.string.item_watermark, R.string.item_watermark_short),
-        MUSIC(R.string.item_music, R.string.item_music_short),
-        IMAGES(R.string.item_images, R.string.item_images_short),
-    }
 
     private val http = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .build()
     private val shortLinks = ShortLinkResolver(http)
-    private lateinit var downloader: MediaStoreDownloader
     private lateinit var webView: WebView
     private var capture: DetailCapture? = null
     private lateinit var attempts: AttemptLog
     private lateinit var settings: Settings
     private var showSettings by mutableStateOf(false)
     private var autoStart by mutableStateOf(true)
-    private var defaultItems by mutableStateOf(setOf(Item.NO_WATERMARK))
+    private var defaultItems by mutableStateOf(setOf(DownloadItem.NO_WATERMARK))
 
     private var phase by mutableStateOf<Phase>(Phase.Idle)
     private var current by mutableStateOf<Aweme?>(null)
-    private val downloaded = mutableStateMapOf<Item, Uri>()
+    private var downloaded by mutableStateOf<Map<DownloadItem, Uri>>(emptyMap())
+    private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
     private var showWebView by mutableStateOf(false)
     private var showLog by mutableStateOf(false)
     private var input by mutableStateOf("")
@@ -127,12 +123,14 @@ class MainActivity : ComponentActivity() {
     private val log = mutableStateListOf<String>()
     private var job: Job? = null
 
+    /**
+     * 只有「解析中」算忙。下載交給 DownloadCenter 在背景排隊，下載中也可以再貼下一支。
+     */
     private val busy: Boolean
-        get() = phase is Phase.Working || phase is Phase.NeedsVerification || phase is Phase.Downloading
+        get() = phase is Phase.Working || phase is Phase.NeedsVerification
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        downloader = MediaStoreDownloader(http, contentResolver)
         attempts = AttemptLog(filesDir)
         settings = Settings(this)
         autoStart = settings.autoStart
@@ -150,7 +148,26 @@ class MainActivity : ComponentActivity() {
                 Surface(Modifier.fillMaxSize()) { Screen() }
             }
         }
+        lifecycleScope.launch {
+            DownloadCenter.state.collect { s ->
+                // 正在解析下一支時，狀態卡顯示解析進度，不被上一支的下載蓋掉。
+                if (busy) return@collect
+                phase = when (s) {
+                    DownloadCenter.State.Idle -> return@collect
+                    is DownloadCenter.State.Running -> Phase.Downloading(s.label, s.done, s.total)
+                    is DownloadCenter.State.Done -> Phase.Done(s.label, s.uri, s.mime)
+                    is DownloadCenter.State.Failed -> Phase.Failed(s.reason)
+                }
+            }
+        }
+        lifecycleScope.launch { DownloadCenter.downloaded.collect { downloaded = it } }
         handle(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 背景下載完成時畫面不在前台，回來時更新成功率。
+        summary = attempts.summary()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -193,7 +210,7 @@ class MainActivity : ComponentActivity() {
         job?.cancel()
         log.clear()
         current = null
-        downloaded.clear()
+        DownloadCenter.reset()
         job = lifecycleScope.launch {
             val started = SystemClock.elapsedRealtime()
             var awemeId = "-"
@@ -248,72 +265,36 @@ class MainActivity : ComponentActivity() {
             log += getString(R.string.log_video, a.title.take(30), a.author, a.durationMs / 1000)
 
             // 圖文作品沒有影片：一律下載圖片，再加上有勾的配樂。
-            val items = if (a.isImagePost) listOfNotNull(Item.IMAGES, Item.MUSIC.takeIf { it in defaultItems })
-                else Item.entries.filter { it != Item.IMAGES && it in defaultItems }
-            var ok = true
-            for (item in items) ok = download(a, item) && ok
-            attempts.record(awemeId, ok, if (ok) "" else "download-failed", SystemClock.elapsedRealtime() - started)
-            summary = attempts.summary()
-        }
-    }
-
-    private suspend fun download(a: Aweme, item: Item): Boolean {
-        val targets: List<Triple<List<String>, Kind, String>> = when (item) {
-            Item.NO_WATERMARK -> listOf(Triple(a.videoNoWatermark, Kind.VIDEO, FileNames.video(a, watermark = false)))
-            Item.WATERMARK -> listOf(Triple(a.videoWatermark, Kind.VIDEO, FileNames.video(a, watermark = true)))
-            Item.MUSIC -> listOf(Triple(a.musicUrls, Kind.AUDIO, FileNames.music(a)))
-            Item.IMAGES -> a.images.mapIndexed { i, urls -> Triple(urls, Kind.IMAGE, FileNames.image(a, i)) }
-        }
-        if (targets.isEmpty() || targets.any { it.first.isEmpty() }) {
-            phase = Phase.Failed(getString(R.string.error_item_missing, getString(item.label)))
-            return false
-        }
-        var last: Uri? = null
-        targets.forEachIndexed { i, (urls, kind, name) ->
-            val label = if (targets.size > 1) getString(R.string.part_of, getString(item.label), i + 1, targets.size)
-                else getString(item.label)
-            phase = Phase.Downloading(label, 0, -1)
-            var lastPct = -1L
-            val result = runCatching {
-                downloader.download(urls, kind, name) { done, total ->
-                    // 每 64KB 回報一次，太頻繁；只在百分比（或未知大小時每 1MB）變動時更新畫面。
-                    val pct = if (total > 0) done * 100 / total else done / (1024 * 1024)
-                    if (pct != lastPct) {
-                        lastPct = pct
-                        runOnUiThread { phase = Phase.Downloading(label, done, total) }
-                    }
-                }
+            val items = if (a.isImagePost) listOfNotNull(DownloadItem.IMAGES, DownloadItem.MUSIC.takeIf { it in defaultItems })
+                else DownloadItem.entries.filter { it != DownloadItem.IMAGES && it in defaultItems }
+            requestNotificationsOnce()
+            phase = Phase.Downloading(getString(items.first().label), 0, -1)
+            val attemptLog = attempts
+            DownloadCenter.enqueue(this@MainActivity, a, items) { ok ->
+                // 這個回呼可能在畫面已經關掉之後才跑，只碰檔案，不碰畫面。
+                attemptLog.record(awemeId, ok, if (ok) "" else "download-failed", SystemClock.elapsedRealtime() - started)
             }
-            val uri = result.getOrElse {
-                val why = describe(it)
-                log += getString(R.string.log_item_failed, name, why)
-                phase = Phase.Failed(getString(R.string.error_download, why))
-                return false
-            }
-            log += getString(R.string.log_item_ok, name)
-            last = uri
         }
-        val uri = last!!
-        downloaded[item] = uri
-        phase = Phase.Done(getString(item.label), uri, targets.last().second.mime)
-        return true
     }
 
-    private fun describe(e: Throwable): String = when (e) {
-        is DownloadException -> when (e.reason) {
-            Reason.NO_URLS -> getString(R.string.error_no_urls)
-            Reason.HTTP -> getString(R.string.error_http, e.code)
-            Reason.EMPTY_BODY -> getString(R.string.error_empty_body)
-            Reason.MEDIA_STORE -> getString(R.string.error_media_store)
-            Reason.INCOMPLETE -> getString(R.string.error_incomplete, mb(e.done), mb(e.total))
-        }
-        // 網路層的例外（逾時、DNS…）訊息本來就是英文的技術描述，原樣顯示。
-        else -> e.message ?: e.javaClass.simpleName
+    /**
+     * Android 13 起通知要使用者同意。第一次下載時問一次；拒絕的話下載照樣進行，只是看不到進度通知。
+     */
+    private fun requestNotificationsOnce() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return
+        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+        if (prefs.getBoolean(ASKED_NOTIFICATIONS, false)) return
+        prefs.edit().putBoolean(ASKED_NOTIFICATIONS, true).apply()
+        askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 
-    private fun downloadExtra(item: Item) {
+
+
+    private fun downloadExtra(item: DownloadItem) {
         val a = current ?: return
-        job = lifecycleScope.launch { download(a, item) }
+        requestNotificationsOnce()
+        DownloadCenter.enqueue(this, a, listOf(item))
     }
 
     private fun open(uri: Uri, mime: String) {
@@ -330,7 +311,8 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         private const val LAST_AUTO_URL = "last_auto_url"
-        private fun mb(bytes: Long) = "%.1f MB".format(bytes / 1024.0 / 1024.0)
+        private const val ASKED_NOTIFICATIONS = "asked_notifications"
+        private fun mb(bytes: Long) = DownloadCenter.mb(bytes)
     }
 
     // ---------------------------------------------------------------- 畫面
@@ -484,7 +466,7 @@ class MainActivity : ComponentActivity() {
                 modifier = Modifier.padding(top = 8.dp))
             Text(stringResource(R.string.settings_default_items_desc), style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
-            listOf(Item.NO_WATERMARK, Item.WATERMARK, Item.MUSIC).forEach { item ->
+            listOf(DownloadItem.NO_WATERMARK, DownloadItem.WATERMARK, DownloadItem.MUSIC).forEach { item ->
                 val checked = item in defaultItems
                 fun toggle() {
                     val next = if (checked) defaultItems - item else defaultItems + item
@@ -550,11 +532,11 @@ class MainActivity : ComponentActivity() {
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                val items = if (a.isImagePost) listOf(Item.IMAGES, Item.MUSIC) else listOf(Item.NO_WATERMARK, Item.WATERMARK, Item.MUSIC)
+                val items = if (a.isImagePost) listOf(DownloadItem.IMAGES, DownloadItem.MUSIC) else listOf(DownloadItem.NO_WATERMARK, DownloadItem.WATERMARK, DownloadItem.MUSIC)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items.forEach { item ->
                         val done = item in downloaded
-                        FilledTonalButton(onClick = { downloadExtra(item) }, enabled = !busy) {
+                        FilledTonalButton(onClick = { downloadExtra(item) }) {
                             Text((if (done) "✓ " else "") + stringResource(item.short))
                         }
                     }
