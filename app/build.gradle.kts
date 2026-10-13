@@ -17,9 +17,27 @@ android {
         versionName = "0.7.1"
     }
 
+    // 正式簽章：金鑰檔與密碼放在使用者層級的 ~/.gradle/gradle.properties（DOUKEEPER_*），
+    // 不進 repo。沒有設定時 release 不簽章，exportReleaseApk 會直接報錯，避免散佈出沒簽的 APK。
+    // 步驟見 docs/RELEASE.md。
+    val releaseStoreFile = providers.gradleProperty("DOUKEEPER_STORE_FILE").orNull
+    signingConfigs {
+        if (releaseStoreFile != null) {
+            create("release") {
+                storeFile = file(releaseStoreFile)
+                storePassword = providers.gradleProperty("DOUKEEPER_STORE_PASSWORD").get()
+                keyAlias = providers.gradleProperty("DOUKEEPER_KEY_ALIAS").get()
+                keyPassword = providers.gradleProperty("DOUKEEPER_KEY_PASSWORD").get()
+            }
+        }
+    }
+
     buildTypes {
         release {
+            // 不開 R8：WebView 注入的 JS 與 WebMessageListener 靠名稱對接，混淆後的問題只會在實機上出現，
+            // 自用 App 省下的那點體積不值得。
             isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 
@@ -68,4 +86,22 @@ val exportDebugApk by tasks.registering(Copy::class) {
 
 tasks.matching { it.name == "assembleDebug" }.configureEach {
     finalizedBy(exportDebugApk)
+}
+
+// 正式版：用固定金鑰簽章，在哪台電腦建置都能覆蓋安裝。散佈請用這份。
+val exportedReleaseApkName = "DouKeeper-v" + android.defaultConfig.versionName + ".apk"
+val hasReleaseKey = providers.gradleProperty("DOUKEEPER_STORE_FILE").isPresent
+
+val exportReleaseApk by tasks.registering(Copy::class) {
+    val keyPresent = hasReleaseKey
+    doFirst {
+        check(keyPresent) { "沒有設定 DOUKEEPER_* 簽章參數，release APK 未簽章（見 docs/RELEASE.md）" }
+    }
+    from(layout.buildDirectory.file("outputs/apk/release/app-release.apk"))
+    into(rootProject.layout.projectDirectory.dir("dist"))
+    rename("app-release\\.apk", exportedReleaseApkName)
+}
+
+tasks.matching { it.name == "assembleRelease" }.configureEach {
+    finalizedBy(exportReleaseApk)
 }

@@ -15,7 +15,7 @@
 | 規格與規劃 | ✅ `docs/SPEC.md` v0.1.0 |
 | Phase 0 骨架與實測 | ⏳ 未開始 |
 | 解析路徑實測 | ⏳ **尚未驗證**，見 `docs/SPEC.md` §5.B |
-| 簽章金鑰 | ⏳ 待產生 |
+| 簽章金鑰 | ✅ 已產生，見 `docs/RELEASE.md` |
 
 ---
 
@@ -27,6 +27,9 @@
 ./gradlew :app:assembleDebug
 ```
 
+正式版（固定金鑰簽章，散佈用這份）：`./gradlew :app:assembleRelease`，產物在 `dist/DouKeeper-v{版本}.apk`。
+簽章參數的設定見 `docs/RELEASE.md`。
+
 完整工具鏈版本見 `docs/SPEC.md` §12。
 
 ---
@@ -36,6 +39,7 @@
 | 檔案 | 內容 |
 |---|---|
 | `docs/SPEC.md` | **主文件**。決策紀錄、使用流程、架構、解析與下載規格、Phase 任務與驗收標準、風險清單 |
+| `docs/RELEASE.md` | 簽章金鑰的保管、備份、換電腦，以及每次發布的步驟 |
 
 ---
 

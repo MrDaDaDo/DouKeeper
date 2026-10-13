@@ -76,7 +76,7 @@
 | B2 | 抖音分享面板能否叫出系統分享選單（實機） | Phase 0 | ✗ **不能**（2026-10-13，Android 17 實機）：抖音的分享面板是自己畫的，沒有本 App 可選。R1 成真，主要進入點改為剪貼簿（§13 R1） |
 | B3 | §5.B 解析路徑實測 | Phase 0 | 🟡 一般影片、長影片 ✅；**圖文待補**（需要一段圖文作品的分享文字） |
 | B4 | 測試手機型號 / Android 版本 | 延後 | ⏸ 目前只在模擬器（Android 14 / WebView 146）驗證 |
-| B5 | 簽章金鑰 | Phase 0 | ⏳ |
+| B5 | 簽章金鑰 | Phase 0 | ✅ 2026-10-13 產生，見 §9 |
 
 ### 1.3 為什麼不上架 Google Play
 
@@ -362,8 +362,13 @@ GitHub Actions：`assembleDebug` + `testDebugUnitTest`。沿用先前的專案�
 
 - 側載也要固定金鑰：debug 簽章每台電腦不同，換台電腦建置的 APK 會**無法覆蓋安裝**，
   只能先移除（下載紀錄跟著消失）。
-- 產生方式與先前的專案`docs/RELEASE.md` 步驟 1 相同；`*.jks`、`keystore.properties` 不進版控。
-- `./gradlew assembleRelease` 之後複製到 `dist/DouyinDL-v{版本}.apk`（比照先前的專案的 `exportDebugApk`）。
+- **金鑰已產生（2026-10-13）**：PKCS12、RSA 4096、alias `doukeeper`，憑證 SHA-256 `65004262…0c796df1`。
+  金鑰檔與密碼放在使用者層級的 `~/.gradle/gradle.properties`（`DOUKEEPER_*`），不在 repo 裡；
+  完整步驟、備份與換電腦方式見 `docs/RELEASE.md`。
+- `./gradlew assembleRelease` 之後自動複製到 `dist/DouKeeper-v{版本}.apk`（`exportReleaseApk`）。
+  沒設定簽章參數時這個任務直接失敗，避免散佈沒簽章的檔案。
+- 不開 R8：WebView 注入的 JS 與 `WebMessageListener` 靠名稱對接，混淆出問題只會在實機上發現。
+- 0.7.1 起 GitHub Release 改附 release 版。從 debug 版換過來必須先移除一次（設定與統計會清掉）。
 - 版本號：semver `versionName` + 遞增的 `versionCode`。
 
 ---
@@ -378,7 +383,7 @@ GitHub Actions：`assembleDebug` + `testDebugUnitTest`。沿用先前的專案�
 | 註冊 `ACTION_SEND` | 實機在抖音按分享，**系統選單中出現本 App** | 🟡 模擬器用 `adb am start` 送分享 intent 可正常進入；抖音實機延後（B2） |
 | 收集真實分享文字與頁面 | 至少：一般影片 ×2、圖文 ×1、長影片 ×1 | 🟡 一般影片 ×2（其中一支長片）；圖文待補 |
 | §5.B 解析路徑實測 | WebView 取得 detail 並下載成功 | ✅ 模擬器：手動驗證一次後連續兩支成功 |
-| 簽章金鑰 + CI | release APK 已簽章；CI 綠燈 | ⏳ |
+| 簽章金鑰 + CI | release APK 已簽章；CI 綠燈 | 🟡 release APK 已用固定金鑰簽章（apksigner 驗證通過）；CI 未做 |
 
 ### Phase 1 — 解析
 
