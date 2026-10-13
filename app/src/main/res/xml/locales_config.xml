@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 13 起，系統設定「應用程式語言」會依這份清單讓使用者單獨切換本 App 的語言。
+  與 res/ 下的語系目錄一一對應：values/（en）、values-b+zh+Hant/、values-b+zh+Hans/。
+-->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="zh-Hant" />
+    <locale android:name="zh-Hans" />
+</locale-config>

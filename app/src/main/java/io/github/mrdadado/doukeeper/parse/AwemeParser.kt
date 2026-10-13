@@ -15,14 +15,15 @@ object AwemeParser {
         data class Ok(val aweme: Aweme) : Result
         /** 拿到的是別支作品——頁面有時會被導到推薦影片（§5.B 實測 6 次中 1 次）。 */
         data class WrongItem(val got: String) : Result
+        /** reason 是給「詳細記錄」看的技術描述，不翻譯。 */
         data class Invalid(val reason: String) : Result
     }
 
     fun parse(json: String, expectedId: String): Result {
         val root = runCatching { JSONObject(json) }.getOrNull()
-            ?: return Result.Invalid("回應不是 JSON")
+            ?: return Result.Invalid("not JSON")
         val detail = root.optJSONObject("aweme_detail")
-            ?: return Result.Invalid("回應裡沒有 aweme_detail（status_code=${root.opt("status_code")}）")
+            ?: return Result.Invalid("no aweme_detail (status_code=${root.opt("status_code")})")
 
         val id = detail.optString("aweme_id")
         if (id != expectedId) return Result.WrongItem(id)

@@ -29,6 +29,15 @@ class MediaStoreDownloader(
         AUDIO(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Environment.DIRECTORY_MUSIC, "audio/mpeg"),
     }
 
+    /**
+     * 下載失敗的原因。這一層沒有 Context，不能直接產生翻譯好的文字，
+     * 所以只給原因代碼與數字，由畫面層對應到 strings.xml。
+     */
+    class DownloadException(val reason: Reason, val code: Int = 0, val done: Long = 0, val total: Long = 0) :
+        IOException(reason.name)
+
+    enum class Reason { NO_URLS, HTTP, EMPTY_BODY, MEDIA_STORE, INCOMPLETE }
+
     /** 依序嘗試每一個備用網址（同一個檔案的不同 CDN），全部失敗才丟出最後一個錯誤。 */
     suspend fun download(
         urls: List<String>,
@@ -36,7 +45,7 @@ class MediaStoreDownloader(
         displayName: String,
         onProgress: (done: Long, total: Long) -> Unit = { _, _ -> },
     ): Uri = withContext(Dispatchers.IO) {
-        require(urls.isNotEmpty()) { "沒有可下載的網址" }
+        if (urls.isEmpty()) throw DownloadException(Reason.NO_URLS)
         var last: Exception? = null
         for (url in urls) {
             try {
@@ -54,8 +63,8 @@ class MediaStoreDownloader(
     ): Uri {
         val request = Request.Builder().url(url).header("User-Agent", ShortLinkResolver.MOBILE_UA).build()
         http.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) throw IOException("HTTP ${response.code}")
-            val body = response.body ?: throw IOException("沒有內容")
+            if (!response.isSuccessful) throw DownloadException(Reason.HTTP, code = response.code)
+            val body = response.body ?: throw DownloadException(Reason.EMPTY_BODY)
             val total = body.contentLength()
 
             val values = ContentValues().apply {
@@ -64,7 +73,7 @@ class MediaStoreDownloader(
                 put(MediaStore.MediaColumns.RELATIVE_PATH, "${kind.directory}/$FOLDER")
                 put(MediaStore.MediaColumns.IS_PENDING, 1)
             }
-            val uri = resolver.insert(kind.collection, values) ?: throw IOException("無法建立媒體項目")
+            val uri = resolver.insert(kind.collection, values) ?: throw DownloadException(Reason.MEDIA_STORE)
             try {
                 resolver.openOutputStream(uri)!!.use { out ->
                     body.byteStream().use { input ->
@@ -77,7 +86,7 @@ class MediaStoreDownloader(
                             done += n
                             onProgress(done, total)
                         }
-                        if (total > 0 && done != total) throw IOException("下載不完整：$done / $total")
+                        if (total > 0 && done != total) throw DownloadException(Reason.INCOMPLETE, done = done, total = total)
                     }
                 }
                 resolver.update(uri, ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }, null, null)
@@ -90,6 +99,10 @@ class MediaStoreDownloader(
     }
 
     companion object {
+        /**
+         * 存放的資料夾名稱，**刻意不翻譯**：跟著語言變的話，使用者切換語言後
+         * 檔案會散在兩個資料夾裡，舊的下載也看起來像不見了。
+         */
         const val FOLDER = "抖音下載"
     }
 }

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 繁體中文（台灣、香港、澳門）。key 與 values/strings.xml 一致。 -->
+<resources>
+    <string name="tile_label">抖音下載</string>
+    <string name="title">抖音下載</string>
+    <string name="summary">最近 %1$d 次成功 %2$d 次</string>
+
+    <string name="idle_title">等待連結</string>
+    <string name="idle_body">在抖音按「分享 → 複製連結」，再回到這裡就會自動開始。\n也可以下拉通知欄點「抖音下載」磚塊。</string>
+    <string name="step_reading_link">讀取連結</string>
+    <string name="step_finding_video">尋找作品</string>
+    <string name="step_fetching_details">取得作品資料</string>
+    <string name="working">%s…</string>
+    <string name="verify_title">請完成下方驗證</string>
+    <string name="verify_body">抖音要求確認你不是機器人。在下方網頁完成驗證後會自動繼續；如果沒有看到驗證，請再等一下。</string>
+    <string name="downloading">下載%s</string>
+    <string name="progress">%1$d%%　%2$s / %3$s</string>
+    <string name="part_of">%1$s %2$d/%3$d</string>
+    <string name="saved">已儲存%s</string>
+    <string name="saved_location">相簿 › %1$s › %2$s</string>
+    <string name="open">開啟</string>
+    <string name="share">分享</string>
+    <string name="failed">失敗</string>
+    <string name="retry">重試</string>
+
+    <string name="error_webview_too_old">這台手機的 WebView 太舊，無法解析抖音頁面。</string>
+    <string name="error_no_link">這段文字裡沒有抖音連結。</string>
+    <string name="error_network">連不到抖音，請檢查網路。</string>
+    <string name="error_redirected">抖音把頁面導到了別支影片，請稍後再試。</string>
+    <string name="error_no_data">拿不到作品資料，請稍後再試。</string>
+    <string name="error_item_missing">這個作品沒有%s。</string>
+    <string name="error_download">下載失敗：%s</string>
+    <string name="error_http">伺服器回應 HTTP %d</string>
+    <string name="error_empty_body">伺服器沒有回傳內容</string>
+    <string name="error_incomplete">下載不完整（%1$s / %2$s）</string>
+    <string name="error_media_store">無法在相簿建立檔案</string>
+    <string name="error_no_urls">沒有可下載的網址</string>
+
+    <string name="no_title">（沒有標題）</string>
+    <string name="item_no_watermark">無浮水印影片</string>
+    <string name="item_watermark">有浮水印影片</string>
+    <string name="item_music">配樂</string>
+    <string name="item_images">圖片</string>
+    <string name="item_no_watermark_short">無浮水印</string>
+    <string name="item_watermark_short">有浮水印</string>
+    <string name="item_music_short">配樂</string>
+    <string name="item_images_short">圖片</string>
+
+    <string name="manual_hint">或手動貼上連結</string>
+    <string name="download">下載</string>
+    <string name="log_show">▸ 詳細記錄</string>
+    <string name="log_hide">▾ 詳細記錄</string>
+    <string name="log_link">連結：%s</string>
+    <string name="log_short_link_failed">短網址導向失敗：%s</string>
+    <string name="log_video_id">作品 ID：%s</string>
+    <string name="log_wrong_item">略過別支作品的資料（%s）</string>
+    <string name="log_invalid">無效回應：%s</string>
+    <string name="log_attempt_failed">第 %d 次沒有拿到資料</string>
+    <string name="log_video">「%1$s」— %2$s，%3$d 秒</string>
+    <string name="log_item_failed">✗ %1$s：%2$s</string>
+    <string name="log_item_ok">✓ %s</string>
+    <string name="log_page_started">頁面開始：%s</string>
+    <string name="log_page_finished">頁面完成：%1$s（%2$s）</string>
+    <string name="log_page_error">頁面錯誤：%1$d %2$s</string>
+    <string name="log_page_http">頁面 HTTP %d</string>
+    <string name="log_js_error">JS 錯誤：%s</string>
+    <string name="log_hook_installed">攔截已安裝於 %s</string>
+</resources>

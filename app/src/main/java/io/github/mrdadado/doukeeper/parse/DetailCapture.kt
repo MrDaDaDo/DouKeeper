@@ -10,6 +10,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import io.github.mrdadado.doukeeper.R
 import androidx.webkit.JavaScriptReplyProxy
 import androidx.webkit.WebMessageCompat
 import androidx.webkit.WebViewCompat
@@ -61,16 +62,16 @@ class DetailCapture(
         WebView.setWebContentsDebuggingEnabled(true)
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
-                onEvent("頁面開始：${url.take(90)}")
+                onEvent(view.context.getString(R.string.log_page_started, url.take(90)))
             }
             override fun onPageFinished(view: WebView, url: String) {
-                onEvent("頁面完成：${url.take(90)}（${view.title}）")
+                onEvent(view.context.getString(R.string.log_page_finished, url.take(90), view.title))
             }
             override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
-                if (request.isForMainFrame) onEvent("頁面錯誤：${error.errorCode} ${error.description}")
+                if (request.isForMainFrame) onEvent(view.context.getString(R.string.log_page_error, error.errorCode, error.description))
             }
             override fun onReceivedHttpError(view: WebView, request: WebResourceRequest, response: WebResourceResponse) {
-                if (request.isForMainFrame) onEvent("頁面 HTTP ${response.statusCode}")
+                if (request.isForMainFrame) onEvent(view.context.getString(R.string.log_page_http, response.statusCode))
             }
         }
         webView.webChromeClient = object : WebChromeClient() {
@@ -78,7 +79,7 @@ class DetailCapture(
                 // chrome-extension:// 那一大串是抖音的指紋腳本在探測擴充套件，WebView 必然失敗，不是問題。
                 val text = m.message()
                 if (m.messageLevel() == ConsoleMessage.MessageLevel.ERROR && "chrome-extension://" !in text) {
-                    onEvent("JS 錯誤：${text.take(120)}")
+                    onEvent(webView.context.getString(R.string.log_js_error, text.take(120)))
                 }
                 return true
             }
@@ -94,7 +95,8 @@ class DetailCapture(
                     isMainFrame: Boolean, replyProxy: JavaScriptReplyProxy,
                 ) {
                     val data = message.data ?: return
-                    if (data.startsWith(DEBUG_PREFIX)) onEvent(data.removePrefix(DEBUG_PREFIX))
+                    if (data.startsWith(HOOK_PREFIX)) onEvent(view.context.getString(R.string.log_hook_installed, data.removePrefix(HOOK_PREFIX)))
+                    else if (data.startsWith(DEBUG_PREFIX)) onEvent(data.removePrefix(DEBUG_PREFIX))
                     else received.trySend(data)
                 }
             },
@@ -127,6 +129,7 @@ class DetailCapture(
     companion object {
         private const val BRIDGE = "DyBridge"
         private const val DEBUG_PREFIX = "@@"
+        private const val HOOK_PREFIX = "@@hook:"
         private val ALLOWED_ORIGINS = setOf("https://www.douyin.com", "https://*.douyin.com")
         const val DESKTOP_UA =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
@@ -144,7 +147,7 @@ class DetailCapture(
               function seen(kind, u) {
                 if (u.indexOf('/aweme/v1/web/') >= 0) debug(kind + ' ' + u.split('?')[0].replace(/^https?:\/\/[^/]+/, ''));
               }
-              debug('hook 已安裝於 ' + location.host + (window.top === window ? '' : '（iframe）'));
+              debug('hook:' + location.host + (window.top === window ? '' : ' (iframe)'));
 
               var origFetch = window.fetch;
               if (origFetch) {

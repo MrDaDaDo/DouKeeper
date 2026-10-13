@@ -64,7 +64,7 @@
 | 網路 | OkHttp | 下載檔案與短網址導向；需要自己控制 User-Agent 與重新導向 |
 | JSON | kotlinx.serialization（`JsonElement` 走訪） | 抖音的資料結構很大又常變，只取需要的欄位，不建完整資料類別 |
 | minSdk / targetSdk | **29** / 36 | 29（Android 10）起 MediaStore 可以寫入公用目錄而不需要儲存權限；自用專案不需要往下相容 |
-| 語言 | 繁體中文 | 自用。字串仍一律放 `strings.xml`，不寫死 |
+| 語言 | **English（預設）、繁體中文、简体中文** | `values/` 放英文當所有未匹配語言的歸宿，`values-b+zh+Hant/`（台港澳）、`values-b+zh+Hans/`（中新）。`locales_config.xml` 讓 Android 13+ 可在系統設定單獨切換。存放資料夾 `抖音下載` 刻意不翻譯，免得切換語言後檔案散在兩處；`attempts.tsv` 的失敗原因固定英文，方便統計 |
 | 簽章 | **仍然要產生自己的金鑰**（§9） | 側載也一樣：簽章不同就不能覆蓋安裝更新 |
 
 ### 1.2 待補資訊

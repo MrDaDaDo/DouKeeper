@@ -48,10 +48,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.annotation.StringRes
 import androidx.lifecycle.lifecycleScope
 import io.github.mrdadado.doukeeper.download.MediaStoreDownloader
+import io.github.mrdadado.doukeeper.download.MediaStoreDownloader.DownloadException
 import io.github.mrdadado.doukeeper.download.MediaStoreDownloader.Kind
+import io.github.mrdadado.doukeeper.download.MediaStoreDownloader.Reason
 import io.github.mrdadado.doukeeper.parse.Aweme
 import io.github.mrdadado.doukeeper.parse.AwemeParser
 import io.github.mrdadado.doukeeper.parse.DetailCapture
@@ -76,7 +80,7 @@ class MainActivity : ComponentActivity() {
     /** 狀態卡顯示的狀態。一次只會是其中一種。 */
     sealed interface Phase {
         data object Idle : Phase
-        data class Working(val step: String) : Phase
+        data class Working(@StringRes val step: Int) : Phase
         /** 等太久還沒拿到資料——幾乎都是跳出了人機驗證，把網頁展開給使用者滑。 */
         data object NeedsVerification : Phase
         data class Downloading(val label: String, val done: Long, val total: Long) : Phase
@@ -85,8 +89,11 @@ class MainActivity : ComponentActivity() {
     }
 
     /** 可下載的項目。按鈕上的字與完成後的打勾都靠這個。 */
-    enum class Item(val label: String) {
-        NO_WATERMARK("無浮水印影片"), WATERMARK("有浮水印影片"), MUSIC("配樂"), IMAGES("圖片"),
+    enum class Item(@StringRes val label: Int, @StringRes val short: Int) {
+        NO_WATERMARK(R.string.item_no_watermark, R.string.item_no_watermark_short),
+        WATERMARK(R.string.item_watermark, R.string.item_watermark_short),
+        MUSIC(R.string.item_music, R.string.item_music_short),
+        IMAGES(R.string.item_images, R.string.item_images_short),
     }
 
     private val http = OkHttpClient.Builder()
@@ -122,7 +129,7 @@ class MainActivity : ComponentActivity() {
         // 模擬器 Android 14 沒有這個問題。拿掉 WebView 畫面立刻正常，改成軟體繪製也正常。
         webView = WebView(this).apply { setLayerType(View.LAYER_TYPE_SOFTWARE, null) }
         capture = DetailCapture(webView) { msg -> runOnUiThread { log += "· $msg" } }.takeIf { it.install() }
-        if (capture == null) phase = Phase.Failed("這台手機的 WebView 太舊，無法解析抖音頁面")
+        if (capture == null) phase = Phase.Failed(getString(R.string.error_webview_too_old))
 
         setContent {
             MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
@@ -182,19 +189,19 @@ class MainActivity : ComponentActivity() {
                 summary = attempts.summary()
             }
 
-            phase = Phase.Working("讀取連結")
+            phase = Phase.Working(R.string.step_reading_link)
             val url = ShareTextParser.extractUrl(text)
-                ?: return@launch run { phase = Phase.Failed("這段文字裡沒有抖音連結") }
-            log += "連結：$url"
+                ?: return@launch run { phase = Phase.Failed(getString(R.string.error_no_link)) }
+            log += getString(R.string.log_link, url)
 
-            phase = Phase.Working("尋找作品")
+            phase = Phase.Working(R.string.step_finding_video)
             val id = runCatching { shortLinks.resolveAwemeId(url) }
-                .onFailure { log += "短網址導向失敗：${it.message}" }
-                .getOrNull() ?: return@launch fail("連不到抖音，請檢查網路", "短網址")
+                .onFailure { log += getString(R.string.log_short_link_failed, it.message) }
+                .getOrNull() ?: return@launch fail(getString(R.string.error_network), "short-link")
             awemeId = id
-            log += "作品 ID：$id"
+            log += getString(R.string.log_video_id, id)
 
-            phase = Phase.Working("取得作品資料")
+            phase = Phase.Working(R.string.step_fetching_details)
             // 6 秒還沒拿到就展開網頁：實測正常情況 3–9 秒，超過多半是跳出了人機驗證。
             val revealer = launch {
                 delay(6_000)
@@ -207,25 +214,26 @@ class MainActivity : ComponentActivity() {
                 val json = capture.capture(id) { candidate ->
                     when (val r = AwemeParser.parse(candidate, id)) {
                         is AwemeParser.Result.Ok -> { aweme = r.aweme; true }
-                        is AwemeParser.Result.WrongItem -> { wrongItems++; log += "略過別支作品的資料（${r.got}）"; false }
-                        is AwemeParser.Result.Invalid -> { log += "無效回應：${r.reason}"; false }
+                        is AwemeParser.Result.WrongItem -> { wrongItems++; log += getString(R.string.log_wrong_item, r.got); false }
+                        is AwemeParser.Result.Invalid -> { log += getString(R.string.log_invalid, r.reason); false }
                     }
                 }
                 if (json != null) break
-                log += "第 $attempt 次沒有拿到資料"
+                log += getString(R.string.log_attempt_failed, attempt)
             }
             revealer.cancel()
             showWebView = false
 
             val a = aweme ?: return@launch fail(
-                if (wrongItems > 0) "抖音把頁面導到了別支影片，請稍後再試" else "拿不到作品資料，請稍後再試",
-                if (wrongItems > 0) "被導到別支作品×$wrongItems" else "逾時",
+                getString(if (wrongItems > 0) R.string.error_redirected else R.string.error_no_data),
+                // attempts.tsv 是給開發分析用的，固定英文，跟著語言變的話不好統計。
+                if (wrongItems > 0) "redirected-to-other-video x$wrongItems" else "timeout",
             )
             current = a
-            log += "「${a.title.take(30)}」— ${a.author}，${a.durationMs / 1000}s"
+            log += getString(R.string.log_video, a.title.take(30), a.author, a.durationMs / 1000)
 
             val ok = download(a, if (a.isImagePost) Item.IMAGES else Item.NO_WATERMARK)
-            attempts.record(awemeId, ok, if (ok) "" else "下載失敗", SystemClock.elapsedRealtime() - started)
+            attempts.record(awemeId, ok, if (ok) "" else "download-failed", SystemClock.elapsedRealtime() - started)
             summary = attempts.summary()
         }
     }
@@ -238,12 +246,13 @@ class MainActivity : ComponentActivity() {
             Item.IMAGES -> a.images.mapIndexed { i, urls -> Triple(urls, Kind.IMAGE, FileNames.image(a, i)) }
         }
         if (targets.isEmpty() || targets.any { it.first.isEmpty() }) {
-            phase = Phase.Failed("這個作品沒有「${item.label}」")
+            phase = Phase.Failed(getString(R.string.error_item_missing, getString(item.label)))
             return false
         }
         var last: Uri? = null
         targets.forEachIndexed { i, (urls, kind, name) ->
-            val label = if (targets.size > 1) "${item.label} ${i + 1}/${targets.size}" else item.label
+            val label = if (targets.size > 1) getString(R.string.part_of, getString(item.label), i + 1, targets.size)
+                else getString(item.label)
             phase = Phase.Downloading(label, 0, -1)
             var lastPct = -1L
             val result = runCatching {
@@ -257,17 +266,30 @@ class MainActivity : ComponentActivity() {
                 }
             }
             val uri = result.getOrElse {
-                log += "✗ $name：${it.message}"
-                phase = Phase.Failed("下載失敗：${it.message}")
+                val why = describe(it)
+                log += getString(R.string.log_item_failed, name, why)
+                phase = Phase.Failed(getString(R.string.error_download, why))
                 return false
             }
-            log += "✓ $name"
+            log += getString(R.string.log_item_ok, name)
             last = uri
         }
         val uri = last!!
         downloaded[item] = uri
-        phase = Phase.Done(item.label, uri, targets.last().second.mime)
+        phase = Phase.Done(getString(item.label), uri, targets.last().second.mime)
         return true
+    }
+
+    private fun describe(e: Throwable): String = when (e) {
+        is DownloadException -> when (e.reason) {
+            Reason.NO_URLS -> getString(R.string.error_no_urls)
+            Reason.HTTP -> getString(R.string.error_http, e.code)
+            Reason.EMPTY_BODY -> getString(R.string.error_empty_body)
+            Reason.MEDIA_STORE -> getString(R.string.error_media_store)
+            Reason.INCOMPLETE -> getString(R.string.error_incomplete, mb(e.done), mb(e.total))
+        }
+        // 網路層的例外（逾時、DNS…）訊息本來就是英文的技術描述，原樣顯示。
+        else -> e.message ?: e.javaClass.simpleName
     }
 
     private fun downloadExtra(item: Item) {
@@ -301,11 +323,11 @@ class MainActivity : ComponentActivity() {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("抖音下載", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 Spacer()
                 if (summary.total > 0) {
                     Text(
-                        "最近 ${summary.total} 次成功 ${summary.ok} 次",
+                        stringResource(R.string.summary, summary.total, summary.ok),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -325,7 +347,7 @@ class MainActivity : ComponentActivity() {
             if (!showWebView) {
                 ManualInput()
                 TextButton(onClick = { showLog = !showLog }) {
-                    Text(if (showLog) "▾ 詳細記錄" else "▸ 詳細記錄")
+                    Text(stringResource(if (showLog) R.string.log_hide else R.string.log_show))
                 }
                 if (showLog) {
                     LazyColumn(Modifier.fillMaxWidth().weight(1f)) {
@@ -358,47 +380,48 @@ class MainActivity : ComponentActivity() {
             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 when (val p = phase) {
                     Phase.Idle -> {
-                        Headline("📋", "等待連結")
-                        Text("在抖音按「分享 → 複製連結」，再回到這裡就會自動開始。\n也可以下拉通知欄點「抖音下載」磚塊。")
+                        Headline("📋", stringResource(R.string.idle_title))
+                        Text(stringResource(R.string.idle_body))
                     }
                     is Phase.Working -> {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             CircularProgressIndicator(Modifier.size(28.dp), color = content, strokeWidth = 3.dp)
                             androidx.compose.foundation.layout.Spacer(Modifier.width(14.dp))
-                            Text("${p.step}…", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.working, stringResource(p.step)), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         }
                     }
                     Phase.NeedsVerification -> {
-                        Headline("👇", "請完成下方驗證")
-                        Text("抖音要求確認你不是機器人。在下方網頁完成驗證後會自動繼續；如果沒有看到驗證，請再等一下。")
+                        Headline("👇", stringResource(R.string.verify_title))
+                        Text(stringResource(R.string.verify_body))
                     }
                     is Phase.Downloading -> {
-                        Headline("⬇", "下載${p.label}")
+                        Headline("⬇", stringResource(R.string.downloading, p.label))
                         if (p.total > 0) {
                             LinearProgressIndicator(
                                 progress = { p.done.toFloat() / p.total },
                                 modifier = Modifier.fillMaxWidth().height(8.dp),
                                 color = content,
                             )
-                            Text("${p.done * 100 / p.total}%　${mb(p.done)} / ${mb(p.total)}")
+                            Text(stringResource(R.string.progress, (p.done * 100 / p.total).toInt(), mb(p.done), mb(p.total)))
                         } else {
                             LinearProgressIndicator(Modifier.fillMaxWidth().height(8.dp), color = content)
                             Text(mb(p.done))
                         }
                     }
                     is Phase.Done -> {
-                        Headline("✓", "已儲存${p.label}")
-                        Text("相簿 › ${if (p.mime.startsWith("audio")) "Music" else if (p.mime.startsWith("image")) "Pictures" else "Movies"} › ${MediaStoreDownloader.FOLDER}")
+                        Headline("✓", stringResource(R.string.saved, p.label))
+                        val dir = if (p.mime.startsWith("audio")) "Music" else if (p.mime.startsWith("image")) "Pictures" else "Movies"
+                        Text(stringResource(R.string.saved_location, dir, MediaStoreDownloader.FOLDER))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = { open(p.uri, p.mime) }) { Text("開啟") }
-                            OutlinedButton(onClick = { share(p.uri, p.mime) }) { Text("分享") }
+                            Button(onClick = { open(p.uri, p.mime) }) { Text(stringResource(R.string.open)) }
+                            OutlinedButton(onClick = { share(p.uri, p.mime) }) { Text(stringResource(R.string.share)) }
                         }
                     }
                     is Phase.Failed -> {
-                        Headline("✗", "失敗")
+                        Headline("✗", stringResource(R.string.failed))
                         Text(p.reason)
                         if (input.isNotBlank()) {
-                            Button(onClick = { start(input) }) { Text("重試") }
+                            Button(onClick = { start(input) }) { Text(stringResource(R.string.retry)) }
                         }
                     }
                 }
@@ -415,7 +438,7 @@ class MainActivity : ComponentActivity() {
     private fun WorkCard(a: Aweme) {
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(a.title.ifBlank { "（沒有標題）" }, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                Text(a.title.ifBlank { stringResource(R.string.no_title) }, maxLines = 2, overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.titleMedium)
                 Text(
                     "@${a.author}" + if (a.durationMs > 0) "　${a.durationMs / 1000 / 60}:%02d".format(a.durationMs / 1000 % 60) else "",
@@ -427,7 +450,7 @@ class MainActivity : ComponentActivity() {
                     items.forEach { item ->
                         val done = item in downloaded
                         FilledTonalButton(onClick = { downloadExtra(item) }, enabled = !busy) {
-                            Text((if (done) "✓ " else "") + item.label.removeSuffix("影片"))
+                            Text((if (done) "✓ " else "") + stringResource(item.short))
                         }
                     }
                 }
@@ -440,10 +463,10 @@ class MainActivity : ComponentActivity() {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = input, onValueChange = { input = it },
-                modifier = Modifier.weight(1f), label = { Text("或手動貼上連結") }, singleLine = true,
+                modifier = Modifier.weight(1f), label = { Text(stringResource(R.string.manual_hint)) }, singleLine = true,
             )
             OutlinedButton(onClick = { start(input) }, enabled = !busy && capture != null && input.isNotBlank()) {
-                Text("下載")
+                Text(stringResource(R.string.download))
             }
         }
     }

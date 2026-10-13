@@ -1,5 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  預設語言是英文：沒有匹配到語系目錄的使用者（日文、韓文……）都落到這裡，
+  所以預設必須是最通用的語言。
+  繁體中文在 values-b+zh+Hant/，簡體中文在 values-b+zh+Hans/。
+  三份的 key 必須一致；新增字串時三份一起加。
+-->
 <resources>
-    <string name="app_name">DouyinVideoDownloader</string>
-    <string name="tile_label">抖音下載</string>
+    <string name="app_name" translatable="false">DouyinVideoDownloader</string>
+    <string name="tile_label">Douyin Download</string>
+    <string name="title">Douyin Downloader</string>
+    <string name="summary">Last %1$d: %2$d succeeded</string>
+
+    <!-- 狀態卡 -->
+    <string name="idle_title">Waiting for a link</string>
+    <string name="idle_body">In Douyin, tap Share → Copy link, then come back here and it starts automatically.\nYou can also pull down the notification shade and tap the \"Douyin Download\" tile.</string>
+    <string name="step_reading_link">Reading link</string>
+    <string name="step_finding_video">Finding the video</string>
+    <string name="step_fetching_details">Fetching video details</string>
+    <string name="working">%s…</string>
+    <string name="verify_title">Please complete the check below</string>
+    <string name="verify_body">Douyin wants to confirm you are not a robot. Finish the check in the page below and it will continue automatically. If you don\'t see a check, wait a moment.</string>
+    <string name="downloading">Downloading %s</string>
+    <string name="progress">%1$d%%  %2$s / %3$s</string>
+    <string name="part_of">%1$s %2$d/%3$d</string>
+    <string name="saved">Saved %s</string>
+    <string name="saved_location">Gallery › %1$s › %2$s</string>
+    <string name="open">Open</string>
+    <string name="share">Share</string>
+    <string name="failed">Failed</string>
+    <string name="retry">Retry</string>
+
+    <!-- 失敗原因：給使用者看的說法，不是技術細節 -->
+    <string name="error_webview_too_old">This phone\'s WebView is too old to read Douyin pages.</string>
+    <string name="error_no_link">No Douyin link found in this text.</string>
+    <string name="error_network">Can\'t reach Douyin. Check your connection.</string>
+    <string name="error_redirected">Douyin sent the page to a different video. Try again later.</string>
+    <string name="error_no_data">Couldn\'t get the video details. Try again later.</string>
+    <string name="error_item_missing">This post has no %s.</string>
+    <string name="error_download">Download failed: %s</string>
+    <string name="error_http">server replied HTTP %d</string>
+    <string name="error_empty_body">empty response</string>
+    <string name="error_incomplete">incomplete (%1$s of %2$s)</string>
+    <string name="error_media_store">couldn\'t create the file in the gallery</string>
+    <string name="error_no_urls">no download address</string>
+
+    <!-- 作品卡 -->
+    <string name="no_title">(no title)</string>
+    <string name="item_no_watermark">video without watermark</string>
+    <string name="item_watermark">video with watermark</string>
+    <string name="item_music">soundtrack</string>
+    <string name="item_images">images</string>
+    <string name="item_no_watermark_short">No watermark</string>
+    <string name="item_watermark_short">Watermark</string>
+    <string name="item_music_short">Soundtrack</string>
+    <string name="item_images_short">Images</string>
+
+    <!-- 手動輸入與詳細記錄 -->
+    <string name="manual_hint">Or paste a link</string>
+    <string name="download">Download</string>
+    <string name="log_show">▸ Details</string>
+    <string name="log_hide">▾ Details</string>
+    <string name="log_link">Link: %s</string>
+    <string name="log_short_link_failed">Short link failed: %s</string>
+    <string name="log_video_id">Video ID: %s</string>
+    <string name="log_wrong_item">Skipped data for another video (%s)</string>
+    <string name="log_invalid">Invalid response: %s</string>
+    <string name="log_attempt_failed">Attempt %d got no data</string>
+    <string name="log_video">\"%1$s\" — %2$s, %3$ds</string>
+    <string name="log_item_failed">✗ %1$s: %2$s</string>
+    <string name="log_item_ok">✓ %s</string>
+    <string name="log_page_started">Page started: %s</string>
+    <string name="log_page_finished">Page finished: %1$s (%2$s)</string>
+    <string name="log_page_error">Page error: %1$d %2$s</string>
+    <string name="log_page_http">Page HTTP %d</string>
+    <string name="log_js_error">JS error: %s</string>
+    <string name="log_hook_installed">Hook installed on %s</string>
 </resources>
