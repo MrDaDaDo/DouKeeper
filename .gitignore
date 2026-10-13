@@ -1,0 +1,45 @@
+# --- 簽章金鑰：絕對不能進版控 -------------------------------------------
+# 洩漏等於別人可以用你的身分發布更新。
+*.jks
+*.keystore
+keystore.properties
+key.properties
+
+# --- 本機環境 -----------------------------------------------------------
+local.properties
+
+# --- Firebase / Google 服務設定 -----------------------------------------
+# google-services.json 含專案識別資訊。私有 repo 下風險較低，但保持排除比較安全；
+# 團隊需要共用時再改成納管並改用 CI 注入。
+google-services.json
+
+# --- Gradle / Android 建置產物 ------------------------------------------
+.gradle/
+build/
+captures/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+release/
+
+# --- Android Studio / IntelliJ ------------------------------------------
+.idea/
+*.iml
+*.iws
+*.ipr
+.navigation/
+
+# --- 系統 ---------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- 其他 ---------------------------------------------------------------
+*.log
+__pycache__/
+
+# 手動散佈用的 APK
+dist/
