@@ -8,6 +8,7 @@ import android.os.SystemClock
 import android.view.View
 import android.webkit.WebView
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -20,12 +21,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -105,6 +112,10 @@ class MainActivity : ComponentActivity() {
     private lateinit var webView: WebView
     private var capture: DetailCapture? = null
     private lateinit var attempts: AttemptLog
+    private lateinit var settings: Settings
+    private var showSettings by mutableStateOf(false)
+    private var autoStart by mutableStateOf(true)
+    private var defaultItems by mutableStateOf(setOf(Item.NO_WATERMARK))
 
     private var phase by mutableStateOf<Phase>(Phase.Idle)
     private var current by mutableStateOf<Aweme?>(null)
@@ -123,6 +134,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         downloader = MediaStoreDownloader(http, contentResolver)
         attempts = AttemptLog(filesDir)
+        settings = Settings(this)
+        autoStart = settings.autoStart
+        defaultItems = settings.defaultItems
         summary = attempts.summary()
         // 軟體繪製：Android 17 實機 上，硬體繪製的 WebView 放進 Compose 會讓**整個視窗**全黑
         //（不只 WebView 那一塊，按鈕和文字也看不到；版面與無障礙節點都正常，就是畫不出來）。
@@ -163,7 +177,8 @@ class MainActivity : ComponentActivity() {
         if (prefs.getString(LAST_AUTO_URL, null) == url) return
         prefs.edit().putString(LAST_AUTO_URL, url).apply()
         input = text
-        start(text)
+        // 關掉自動開始時只填進輸入框，讓使用者自己按下載。
+        if (autoStart) start(text)
     }
 
     private fun handle(intent: Intent?) {
@@ -232,7 +247,11 @@ class MainActivity : ComponentActivity() {
             current = a
             log += getString(R.string.log_video, a.title.take(30), a.author, a.durationMs / 1000)
 
-            val ok = download(a, if (a.isImagePost) Item.IMAGES else Item.NO_WATERMARK)
+            // 圖文作品沒有影片：一律下載圖片，再加上有勾的配樂。
+            val items = if (a.isImagePost) listOfNotNull(Item.IMAGES, Item.MUSIC.takeIf { it in defaultItems })
+                else Item.entries.filter { it != Item.IMAGES && it in defaultItems }
+            var ok = true
+            for (item in items) ok = download(a, item) && ok
             attempts.record(awemeId, ok, if (ok) "" else "download-failed", SystemClock.elapsedRealtime() - started)
             summary = attempts.summary()
         }
@@ -318,6 +337,11 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun Screen() {
+        if (showSettings) {
+            BackHandler { showSettings = false }
+            SettingsScreen()
+            return
+        }
         Column(
             Modifier.fillMaxSize().safeDrawingPadding().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -331,6 +355,9 @@ class MainActivity : ComponentActivity() {
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                }
+                TextButton(onClick = { showSettings = true }) {
+                    Text("⚙", style = MaterialTheme.typography.titleLarge)
                 }
             }
 
@@ -426,6 +453,84 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    @Composable
+    private fun SettingsScreen() {
+        Column(
+            Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { showSettings = false }) { Text("←", style = MaterialTheme.typography.titleLarge) }
+                Text(stringResource(R.string.settings), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            }
+
+            Row(
+                Modifier.fillMaxWidth().clickable { autoStart = !autoStart; settings.autoStart = autoStart }.padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.settings_auto_start), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.settings_auto_start_desc), style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(checked = autoStart, onCheckedChange = { autoStart = it; settings.autoStart = it })
+            }
+            HorizontalDivider()
+
+            Text(stringResource(R.string.settings_default_items), style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 8.dp))
+            Text(stringResource(R.string.settings_default_items_desc), style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            listOf(Item.NO_WATERMARK, Item.WATERMARK, Item.MUSIC).forEach { item ->
+                val checked = item in defaultItems
+                fun toggle() {
+                    val next = if (checked) defaultItems - item else defaultItems + item
+                    // 至少留一項：全部取消的話解析完什麼都不做，沒有意義。
+                    if (next.isEmpty()) return
+                    defaultItems = next
+                    settings.defaultItems = next
+                }
+                Row(Modifier.fillMaxWidth().clickable { toggle() }, verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = checked, onCheckedChange = { toggle() })
+                    Text(stringResource(item.label).replaceFirstChar { it.uppercase() })
+                }
+            }
+            HorizontalDivider()
+
+            // Android 13 起系統有「App 語言」設定頁，直接跳過去，不自己另做一套。
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                Column(
+                    Modifier.fillMaxWidth().clickable {
+                        runCatching {
+                            startActivity(Intent(android.provider.Settings.ACTION_APP_LOCALE_SETTINGS, Uri.parse("package:$packageName")))
+                        }
+                    }.padding(vertical = 12.dp),
+                ) {
+                    Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.settings_language_desc), style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                HorizontalDivider()
+            }
+
+            Column(
+                Modifier.fillMaxWidth().clickable { attempts.reset(); summary = attempts.summary() }.padding(vertical = 12.dp),
+            ) {
+                Text(stringResource(R.string.settings_reset_stats), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.summary, summary.total, summary.ok), style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            HorizontalDivider()
+
+            Text(
+                "v" + packageManager.getPackageInfo(packageName, 0).versionName,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp),
+            )
         }
     }
 

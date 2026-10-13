@@ -25,6 +25,10 @@ class AttemptLog(dir: File) {
         file.appendText("${time.format(Date())}\t$awemeId\t${if (ok) "OK" else "FAIL"}\t${ms}ms\t$clean\n")
     }
 
+    fun reset() {
+        file.delete()
+    }
+
     /** 最近 [last] 次裡成功幾次。 */
     fun summary(last: Int = 50): Summary {
         if (!file.exists()) return Summary(0, 0)

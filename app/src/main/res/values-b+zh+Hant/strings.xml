@@ -65,4 +65,12 @@
     <string name="log_page_http">頁面 HTTP %d</string>
     <string name="log_js_error">JS 錯誤：%s</string>
     <string name="log_hook_installed">攔截已安裝於 %s</string>
+    <string name="settings">設定</string>
+    <string name="settings_auto_start">自動開始</string>
+    <string name="settings_auto_start_desc">打開 App 時，剪貼簿裡有新的抖音連結就直接開始。關掉的話只貼進輸入框。</string>
+    <string name="settings_default_items">預設下載內容</string>
+    <string name="settings_default_items_desc">圖文作品一律下載圖片，有勾配樂的話一併下載。</string>
+    <string name="settings_language">語言</string>
+    <string name="settings_language_desc">在系統設定中選擇本 App 的語言</string>
+    <string name="settings_reset_stats">重設成功率統計</string>
 </resources>
