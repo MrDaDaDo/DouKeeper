@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Android 13 主題圖示的單色圖層（只看 alpha）：書籤＋鏤空的播放三角，沒有錯位殘影。
-  彩色圖示是 ic_launcher_foreground.xml；錯位層放進單色圖示會變成一團模糊的外框。
+  Android 13 主題圖示的單色圖層（只看 alpha）：實心的朝下三角＋托盤線，沒有光暈。
+  霓虹光暈放進單色圖示會糊成一團，所以跟彩色前景（ic_launcher_foreground.xml）分開。
+  三角形用「填色＋同色圓角描邊」做出圓角：向量 path 本身沒有圓角屬性。
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd"
-        android:pathData="M42,30 H66 A4,4 0 0 1 70,34 V80 L54,68 L38,80 V34 A4,4 0 0 1 42,30 Z M49,40 L49,58 L63,49 Z" />
+    <path android:fillColor="#FFFFFFFF" android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="7" android:strokeLineJoin="round"
+        android:pathData="M37,36 L71,36 L54,61 Z" />
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M36.5,70.5 h35 a3.5,3.5 0 0 1 0,7 h-35 a3.5,3.5 0 0 1 0,-7 z" />
 </vector>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  快速設定磚塊與通知的小圖示：與 App 圖示同一個符號（書籤＋鏤空播放三角），縮到 24×24。
+  快速設定磚塊與通知的小圖示：與 App 圖示同一個符號（朝下三角＋托盤線），縮到 24×24。
   這類圖示只看 alpha，顏色由系統決定。
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
@@ -8,6 +8,9 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd"
-        android:pathData="M7.5,2 H16.5 A1.5,1.5 0 0 1 18,3.5 V22 L12,17.5 L6,22 V3.5 A1.5,1.5 0 0 1 7.5,2 Z M10.5,6.5 L10.5,13 L15.5,9.75 Z" />
+    <path android:fillColor="#FFFFFFFF" android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="2" android:strokeLineJoin="round"
+        android:pathData="M6.5,4.5 L17.5,4.5 L12,13 Z" />
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M5.5,17 h13 a1.25,1.25 0 0 1 0,2.5 h-13 a1.25,1.25 0 0 1 0,-2.5 z" />
 </vector>

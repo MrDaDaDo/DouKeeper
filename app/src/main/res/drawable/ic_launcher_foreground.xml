@@ -1,16 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  App 圖示前景：書籤（Keeper＝收藏、留住）＋中間鏤空的播放三角（影片），加青紅錯位殘影。
+  App 圖示前景：朝下的三角形（播放鍵轉向＝下載箭頭）＋托盤線，做成霓虹燈管。
+  使用者從 12 個候選裡選的組合：霓虹風格＋下載三角圖案（2026-10-13）。
 
-  配色照抖音（使用者指定，2026-10-13）：黑底、白色主體、左上青 #25F4EE、右下紅 #FE2C55。
-  符號是自己的書籤造型，不用抖音的音符。只適合自用側載——
-  **若日後要公開發佈，這組配色必須換掉**：黑底＋白主體＋青紅錯位是抖音的品牌識別。
+  向量圖沒有模糊濾鏡，光暈是同一個形狀疊四層描邊：
+  外層紫色寬描邊（最淡）→ 桃紅 → 桃紅較濃 → 白色燈管核心。越外層越寬越淡，像光往外散。
 
-  三層同一個形狀，都用 evenOdd 把播放三角挖空：白色層的洞會透出底下錯開的青、紅兩層，
-  洞的邊緣也帶出錯位色，跟外框的殘影是同一種效果。
-
-  安全區：自適應圖示只保證中央直徑 66 的圓不被裁（21–87）。書籤落在 x 36–72、y 28–82。
-  形狀與 ic_launcher_monochrome.xml 相同（那份給 Android 13 主題圖示用）。
+  安全區：自適應圖示只保證中央直徑 66 的圓不被裁（21–87），最外層光暈約落在 x 26–82、y 26–85。
+  單色圖層（主題圖示）用實心版本，見 ic_launcher_monochrome.xml。
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -18,16 +15,23 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <group android:translateX="-2.2" android:translateY="-2.2">
-        <path android:fillColor="#FF25F4EE" android:fillType="evenOdd"
-            android:pathData="M42,30 H66 A4,4 0 0 1 70,34 V80 L54,68 L38,80 V34 A4,4 0 0 1 42,30 Z M49,40 L49,58 L63,49 Z" />
-    </group>
+    <!-- 三角形 -->
+    <path android:pathData="M36,36 L72,36 L54,62 Z"
+        android:strokeColor="#2EA855F7" android:strokeWidth="15" android:strokeLineJoin="round" />
+    <path android:pathData="M36,36 L72,36 L54,62 Z"
+        android:strokeColor="#4DF43F7F" android:strokeWidth="10" android:strokeLineJoin="round" />
+    <path android:pathData="M36,36 L72,36 L54,62 Z"
+        android:strokeColor="#B3FF4D94" android:strokeWidth="6.5" android:strokeLineJoin="round" />
+    <path android:pathData="M36,36 L72,36 L54,62 Z"
+        android:strokeColor="#FFFFF1F7" android:strokeWidth="3" android:strokeLineJoin="round" />
 
-    <group android:translateX="2.2" android:translateY="2.2">
-        <path android:fillColor="#FFFE2C55" android:fillType="evenOdd"
-            android:pathData="M42,30 H66 A4,4 0 0 1 70,34 V80 L54,68 L38,80 V34 A4,4 0 0 1 42,30 Z M49,40 L49,58 L63,49 Z" />
-    </group>
-
-    <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd"
-        android:pathData="M42,30 H66 A4,4 0 0 1 70,34 V80 L54,68 L38,80 V34 A4,4 0 0 1 42,30 Z M49,40 L49,58 L63,49 Z" />
+    <!-- 托盤線 -->
+    <path android:pathData="M37,74 H71"
+        android:strokeColor="#2EA855F7" android:strokeWidth="15" android:strokeLineCap="round" />
+    <path android:pathData="M37,74 H71"
+        android:strokeColor="#4DF43F7F" android:strokeWidth="10" android:strokeLineCap="round" />
+    <path android:pathData="M37,74 H71"
+        android:strokeColor="#B3FF4D94" android:strokeWidth="6.5" android:strokeLineCap="round" />
+    <path android:pathData="M37,74 H71"
+        android:strokeColor="#FFFFF1F7" android:strokeWidth="3" android:strokeLineCap="round" />
 </vector>
