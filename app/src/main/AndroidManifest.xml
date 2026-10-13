@@ -27,5 +27,17 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
+
+        <!-- 快速設定磚塊：複製連結後下拉通知欄點一下（DownloadTileService 的註解說明為什麼需要它）。 -->
+        <service
+            android:name=".DownloadTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_tile_download"
+            android:label="@string/tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

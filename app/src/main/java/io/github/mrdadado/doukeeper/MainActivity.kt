@@ -1,5 +1,6 @@
 package io.github.mrdadado.doukeeper
 
+import android.content.ClipboardManager
 import android.content.Intent
 import android.os.Bundle
 import android.os.SystemClock
@@ -69,10 +70,14 @@ class MainActivity : ComponentActivity() {
     private var current by mutableStateOf<Aweme?>(null)
     private var busy by mutableStateOf(false)
     private var job: Job? = null
+    private lateinit var attempts: AttemptLog
+    private var summary by mutableStateOf(AttemptLog.Summary(0, 0))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         downloader = MediaStoreDownloader(http, contentResolver)
+        attempts = AttemptLog(filesDir)
+        summary = attempts.summary()
         // 軟體繪製：Android 17 實機 上，硬體繪製的 WebView 放進 Compose 會讓**整個視窗**全黑
         //（不只 WebView 那一塊，按鈕和文字也看不到；版面與無障礙節點都正常，就是畫不出來）。
         // 模擬器 Android 14 沒有這個問題。拿掉 WebView 畫面立刻正常，改成軟體繪製也正常。
@@ -93,6 +98,28 @@ class MainActivity : ComponentActivity() {
         handle(intent)
     }
 
+    /**
+     * 拿到焦點時讀剪貼簿：抖音只能「複製連結」，這是主要入口（docs/SPEC.md B2）。
+     *
+     * 必須等 onWindowFocusChanged，不能在 onResume 讀：Android 10 起 App 要真的拿到焦點
+     * 才讀得到剪貼簿，onResume 時還沒有，讀到的是空的。
+     *
+     * 同一個連結只自動處理一次，否則每次切回 App 都會重新下載一份。
+     */
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (!hasFocus || busy) return
+        val clip = getSystemService(ClipboardManager::class.java)?.primaryClip ?: return
+        if (clip.itemCount == 0) return
+        val text = clip.getItemAt(0).coerceToText(this)?.toString() ?: return
+        val url = ShareTextParser.extractUrl(text) ?: return
+        val prefs = getSharedPreferences("clipboard", MODE_PRIVATE)
+        if (prefs.getString(LAST_AUTO_URL, null) == url) return
+        prefs.edit().putString(LAST_AUTO_URL, url).apply()
+        input = text
+        start(text)
+    }
+
     private fun handle(intent: Intent?) {
         if (intent?.action != Intent.ACTION_SEND) return
         val text = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return
@@ -107,6 +134,12 @@ class MainActivity : ComponentActivity() {
         current = null
         job = lifecycleScope.launch {
             busy = true
+            val started = SystemClock.elapsedRealtime()
+            var awemeId = "-"
+            fun record(ok: Boolean, detail: String) {
+                attempts.record(awemeId, ok, detail, SystemClock.elapsedRealtime() - started)
+                summary = attempts.summary()
+            }
             try {
                 val url = ShareTextParser.extractUrl(text)
                     ?: return@launch run { log += "✗ 這段分享內容裡沒有抖音連結" }
@@ -115,16 +148,18 @@ class MainActivity : ComponentActivity() {
                 val t0 = SystemClock.elapsedRealtime()
                 val id = runCatching { shortLinks.resolveAwemeId(url) }
                     .onFailure { log += "✗ 短網址導向失敗：${it.message}" }
-                    .getOrNull() ?: return@launch run { log += "✗ 導向後的網址裡找不到作品 ID" }
+                    .getOrNull() ?: return@launch run { log += "✗ 導向後的網址裡找不到作品 ID"; record(false, "短網址") }
+                awemeId = id
                 log += "作品 ID：$id（${SystemClock.elapsedRealtime() - t0}ms）"
 
                 var aweme: Aweme? = null
+                var wrongItems = 0
                 for (attempt in 1..2) {
                     val t1 = SystemClock.elapsedRealtime()
                     val json = capture.capture(id) { candidate ->
                         when (val r = AwemeParser.parse(candidate, id)) {
                             is AwemeParser.Result.Ok -> { aweme = r.aweme; true }
-                            is AwemeParser.Result.WrongItem -> { log += "  略過別支作品的資料（${r.got}）"; false }
+                            is AwemeParser.Result.WrongItem -> { wrongItems++; log += "  略過別支作品的資料（${r.got}）"; false }
                             is AwemeParser.Result.Invalid -> { log += "  無效回應：${r.reason}"; false }
                         }
                     }
@@ -132,26 +167,30 @@ class MainActivity : ComponentActivity() {
                     if (json != null) { log += "取得資料（第 $attempt 次，${ms}ms）"; break }
                     log += "✗ 第 $attempt 次逾時（${ms}ms）"
                 }
-                val a = aweme ?: return@launch run { log += "✗ 拿不到作品資料" }
+                val a = aweme ?: return@launch run {
+                    log += "✗ 拿不到作品資料"
+                    record(false, if (wrongItems > 0) "被導到別支作品×$wrongItems" else "逾時")
+                }
                 current = a
                 log += "「${a.title.take(30)}」— ${a.author}，${a.durationMs / 1000}s"
                 log += "無浮水印 ${a.videoNoWatermark.size} 個網址、有浮水印 ${a.videoWatermark.size} 個、" +
                     "配樂 ${a.musicUrls.size} 個、圖片 ${a.images.size} 張"
 
                 // 驗證版：解析完自動下載預設內容，模擬正式版「直接用預設下載」的行為。
-                if (a.isImagePost) downloadImages(a) else download(a.videoNoWatermark, Kind.VIDEO, FileNames.video(a, watermark = false))
+                val ok = if (a.isImagePost) downloadImages(a) else download(a.videoNoWatermark, Kind.VIDEO, FileNames.video(a, watermark = false))
+                record(ok, if (ok) "" else "下載失敗")
             } finally {
                 busy = false
             }
         }
     }
 
-    private suspend fun download(urls: List<String>, kind: Kind, name: String) {
-        if (urls.isEmpty()) { log += "✗ $name：沒有網址"; return }
+    private suspend fun download(urls: List<String>, kind: Kind, name: String): Boolean {
+        if (urls.isEmpty()) { log += "✗ $name：沒有網址"; return false }
         val t0 = SystemClock.elapsedRealtime()
         val index = log.size
         log += "下載 $name…"
-        runCatching {
+        return runCatching {
             downloader.download(urls, kind, name) { done, total ->
                 val pct = if (total > 0) " ${done * 100 / total}%" else ""
                 runOnUiThread { log[index] = "下載 $name… ${done / 1024}KB$pct" }
@@ -160,15 +199,18 @@ class MainActivity : ComponentActivity() {
             log[index] = "✓ $name（${SystemClock.elapsedRealtime() - t0}ms）"
         }.onFailure {
             log[index] = "✗ $name：${it.message}"
-        }
+        }.isSuccess
     }
 
-    private suspend fun downloadImages(a: Aweme) {
-        a.images.forEachIndexed { i, urls -> download(urls, Kind.IMAGE, FileNames.image(a, i)) }
-    }
+    private suspend fun downloadImages(a: Aweme): Boolean =
+        a.images.mapIndexed { i, urls -> download(urls, Kind.IMAGE, FileNames.image(a, i)) }.all { it }
 
     private fun startExtra(block: suspend () -> Unit) {
         job = lifecycleScope.launch { busy = true; try { block() } finally { busy = false } }
+    }
+
+    companion object {
+        private const val LAST_AUTO_URL = "last_auto_url"
     }
 
     @Composable
@@ -183,6 +225,9 @@ class MainActivity : ComponentActivity() {
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { start(input) }, enabled = !busy && capture != null) { Text("解析並下載") }
+                if (summary.total > 0) {
+                    Text("最近 ${summary.total} 次成功 ${summary.ok} 次", style = MaterialTheme.typography.bodyMedium)
+                }
             }
             current?.let { a ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
