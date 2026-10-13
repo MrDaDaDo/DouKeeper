@@ -3,7 +3,7 @@
 | 項目 | 內容 |
 |---|---|
 | 名稱 | **DouKeeper**（2026-10-13 定案，各語言都用英文名。原暫名 DouyinVideoDownloader；DouSave／抖存 已有同類專案使用，放棄） |
-| Repository | `github.com/MrDaDaDo/DouKeeper`（private） |
+| Repository | `github.com/MrDaDaDo/DouKeeper` |
 | Target Platform | Android Native (Kotlin) |
 | Package | `io.github.mrdadado.doukeeper`（改名後**刻意不改**：改了手機會當成另一個 App，設定與紀錄都要重來） |
 | Doc Version | **v0.2.0** |
@@ -240,7 +240,7 @@ data class Aweme(
 1. 偵測到驗證畫面時把 WebView 顯示給使用者操作（不能只在背景跑）。
 2. 保留 WebView 的 cookie——通過一次之後的請求不再要求驗證。
 
-**實體手機（Android 17 實機，2026-10-13）：WebView 放進 Compose 畫面時整個 App 全黑。**
+**實體手機（Android 17，2026-10-13）：WebView 放進 Compose 畫面時整個 App 全黑。**
 版面與無障礙節點都正常、沒有當機，就是一個像素都畫不出來；拿掉 WebView 立刻正常。
 WebView 改成 `LAYER_TYPE_SOFTWARE` 後正常顯示。模擬器（Android 14）沒有這個問題——
 **模擬器測過不代表手機沒事**，畫面相關的改動都要上實機看一次。

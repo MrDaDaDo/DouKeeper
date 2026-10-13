@@ -136,7 +136,7 @@ class MainActivity : ComponentActivity() {
         autoStart = settings.autoStart
         defaultItems = settings.defaultItems
         summary = attempts.summary()
-        // 軟體繪製：Android 17 實機 上，硬體繪製的 WebView 放進 Compose 會讓**整個視窗**全黑
+        // 軟體繪製：Android 17 實機上，硬體繪製的 WebView 放進 Compose 會讓**整個視窗**全黑
         //（不只 WebView 那一塊，按鈕和文字也看不到；版面與無障礙節點都正常，就是畫不出來）。
         // 模擬器 Android 14 沒有這個問題。拿掉 WebView 畫面立刻正常，改成軟體繪製也正常。
         webView = WebView(this).apply { setLayerType(View.LAYER_TYPE_SOFTWARE, null) }
