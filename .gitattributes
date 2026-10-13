@@ -1,0 +1,4 @@
+# gradlew 在 CI（Linux）上執行，換成 CRLF 會變成 "bad interpreter"。
+gradlew text eol=lf
+*.bat text eol=crlf
+*.jar binary

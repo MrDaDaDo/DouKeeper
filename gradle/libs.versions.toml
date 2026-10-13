@@ -1,0 +1,42 @@
+# 套件版本集中管理在這一個檔案（Gradle Version Catalog）。
+# 要升版只改這裡，不要散在各個 build.gradle.kts 裡。
+# 前幾項是本機實測可建置的組合（docs/SPEC.md §12）。
+
+[versions]
+agp = "8.13.0"
+kotlin = "2.2.20"
+composeBom = "2025.04.01"
+
+coreKtx = "1.16.0"
+activityCompose = "1.10.1"
+lifecycle = "2.9.0"
+coroutines = "1.10.2"
+
+# addDocumentStartJavaScript 與 addWebMessageListener 都在這裡，
+# 解析抖音的整條路徑靠它們（docs/SPEC.md §5.B）。
+webkit = "1.14.0"
+okhttp = "4.12.0"
+
+junit = "4.13.2"
+# Android 內建的 org.json 在 JVM 單元測試裡只是空殼（每個方法都丟例外），
+# 測試要另外放一份真的實作。
+orgJson = "20240303"
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
+androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+org-json = { group = "org.json", name = "json", version.ref = "orgJson" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
