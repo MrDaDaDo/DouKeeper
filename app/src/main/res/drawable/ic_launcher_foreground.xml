@@ -1,24 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  App 圖示前景：朝下的「播放」三角形＋底下一條托盤線——播放鍵轉個方向就是下載箭頭。
+  App 圖示前景：朝下的「播放」三角形＋托盤線，做成霓虹燈管。
 
-  自適應圖示是 108×108，只有中央直徑 66 的圓保證不被裁切（21–87），
-  符號落在 x 33–75、y 31–78 之內。
-  三角形用「填色＋同色圓角描邊」做出圓角：向量圖的 path 本身沒有圓角屬性。
-  這份也拿來當 Android 13 主題圖示的單色圖層（只看 alpha）。
+  向量圖沒有模糊濾鏡，發光是用同一個形狀疊出來的：
+  外層紫色寬描邊（最淡）→ 桃紅中描邊 → 桃紅窄描邊（較濃）→ 白色燈管核心。
+  越外層越寬越淡，看起來就像光暈往外散。
+
+  只用描邊、不填色：燈管是空心的線，這也讓它跟單色圖層的實心符號（ic_launcher_monochrome）
+  有區別——那份給 Android 13 主題圖示用。
+
+  安全區：自適應圖示只保證中央直徑 66 的圓不被裁（21–87）。
+  最外層光暈落在約 x 26–82、y 26–85。
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="7"
-        android:strokeLineJoin="round"
-        android:pathData="M37,36 L71,36 L54,61 Z" />
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M36.5,70.5 h35 a3.5,3.5 0 0 1 0,7 h-35 a3.5,3.5 0 0 1 0,-7 z" />
+
+    <!-- 三角形 -->
+    <path android:pathData="M36,36 L72,36 L54,62 Z"
+        android:strokeColor="#2EA855F7" android:strokeWidth="15"
+        android:strokeLineJoin="round" />
+    <path android:pathData="M36,36 L72,36 L54,62 Z"
+        android:strokeColor="#4DF43F7F" android:strokeWidth="10"
+        android:strokeLineJoin="round" />
+    <path android:pathData="M36,36 L72,36 L54,62 Z"
+        android:strokeColor="#B3FF4D94" android:strokeWidth="6.5"
+        android:strokeLineJoin="round" />
+    <path android:pathData="M36,36 L72,36 L54,62 Z"
+        android:strokeColor="#FFFFF1F7" android:strokeWidth="3"
+        android:strokeLineJoin="round" />
+
+    <!-- 托盤線 -->
+    <path android:pathData="M37,74 H71"
+        android:strokeColor="#2EA855F7" android:strokeWidth="15"
+        android:strokeLineCap="round" />
+    <path android:pathData="M37,74 H71"
+        android:strokeColor="#4DF43F7F" android:strokeWidth="10"
+        android:strokeLineCap="round" />
+    <path android:pathData="M37,74 H71"
+        android:strokeColor="#B3FF4D94" android:strokeWidth="6.5"
+        android:strokeLineCap="round" />
+    <path android:pathData="M37,74 H71"
+        android:strokeColor="#FFFFF1F7" android:strokeWidth="3"
+        android:strokeLineCap="round" />
 </vector>

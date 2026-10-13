@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  App 圖示背景：珊瑚橘 → 桃紅 → 紫的對角漸層。
-  刻意避開抖音的黑底＋青紅錯位配色——這是自用工具，不能看起來像抖音官方 App。
+  App 圖示背景：近黑色，中央帶一點紫色暗光，讓前景的霓虹看起來像打在牆上。
+
+  黑底霓虹是使用者選的風格方向（2026-10-13）。只取「深色、高對比、會發光」的感覺；
+  抖音的音符商標與青紅錯位殘影都不用——那是它的品牌識別，桌面上也會跟抖音本人搞混。
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
@@ -12,14 +14,13 @@
     <path android:pathData="M0,0h108v108h-108z">
         <aapt:attr name="android:fillColor">
             <gradient
-                android:type="linear"
-                android:startX="0"
-                android:startY="0"
-                android:endX="108"
-                android:endY="108">
-                <item android:offset="0" android:color="#FFFF7A45" />
-                <item android:offset="0.5" android:color="#FFF43F7F" />
-                <item android:offset="1" android:color="#FF7C3AED" />
+                android:type="radial"
+                android:centerX="54"
+                android:centerY="52"
+                android:gradientRadius="76">
+                <item android:offset="0" android:color="#FF24123A" />
+                <item android:offset="0.55" android:color="#FF110A1C" />
+                <item android:offset="1" android:color="#FF07060C" />
             </gradient>
         </aapt:attr>
     </path>
