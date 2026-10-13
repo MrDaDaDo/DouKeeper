@@ -74,6 +74,7 @@ keytool -genkeypair -v -keystore doukeeper-release.jks -storetype PKCS12 \
 
 ## 3. 從 debug 版換到 release 版（只會發生一次）
 
-0.7.1 以前散佈的都是 debug 簽章。第一次裝 release 版時手機會說「與現有套件衝突」，
-必須**先移除 debug 版**，App 內的設定與成功率統計會清掉。已經下載到 `Movies/DouKeeper` 等資料夾的檔案不受影響。
+0.7.1 以前散佈的是 debug 簽章、舊的 package name，手機會把新版當成另一個 App。
+裝好新版後**移除舊版**（圖示一樣、名稱一樣，可以從「設定 → 應用程式」看 package 分辨），
+舊版的設定與成功率統計不會帶過來。已經下載到 `Movies/DouKeeper` 等資料夾的檔案不受影響。
 之後的 release 版就能一直直接覆蓋安裝。

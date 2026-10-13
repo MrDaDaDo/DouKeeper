@@ -5,7 +5,7 @@
 | 名稱 | **DouKeeper**（2026-10-13 定案，各語言都用英文名。原暫名 DouyinVideoDownloader；DouSave／抖存 已有同類專案使用，放棄） |
 | Repository | `github.com/MrDaDaDo/DouKeeper` |
 | Target Platform | Android Native (Kotlin) |
-| Package | `io.github.mrdadado.doukeeper`（改名後**刻意不改**：改了手機會當成另一個 App，設定與紀錄都要重來） |
+| Package | `io.github.mrdadado.doukeeper`（2026-10-13 公開前定案，**之後不再改**：改了手機會當成另一個 App，設定與紀錄都要重來） |
 | Doc Version | **v0.2.0** |
 | Last Updated | 2026-10-13 |
 | 發布方式 | **自用 / 側載 APK，不上架 Google Play**（理由見 §1.3） |
@@ -72,7 +72,7 @@
 
 | # | 項目 | 需要時機 | 狀態 |
 |---|---|---|---|
-| B1 | App 中文名稱與最終 package name | Phase 0 | ⏳ package 一旦有人安裝就不要再改，否則會變成另一個 App |
+| B1 | App 名稱與最終 package name | Phase 0 | ✅ DouKeeper／`io.github.mrdadado.doukeeper`（2026-10-13） |
 | B2 | 抖音分享面板能否叫出系統分享選單（實機） | Phase 0 | ✗ **不能**（2026-10-13，Android 17 實機）：抖音的分享面板是自己畫的，沒有本 App 可選。R1 成真，主要進入點改為剪貼簿（§13 R1） |
 | B3 | §5.B 解析路徑實測 | Phase 0 | 🟡 一般影片、長影片 ✅；**圖文待補**（需要一段圖文作品的分享文字） |
 | B4 | 測試手機型號 / Android 版本 | 延後 | ⏸ 目前只在模擬器（Android 14 / WebView 146）驗證 |
