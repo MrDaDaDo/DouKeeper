@@ -13,8 +13,8 @@ android {
         // 29 起 MediaStore 寫入公用目錄不需要儲存權限（docs/SPEC.md §5.D）。
         minSdk = 29
         targetSdk = 36
-        versionCode = 8
-        versionName = "0.6.0"
+        versionCode = 9
+        versionName = "0.7.0"
     }
 
     buildTypes {
@@ -58,7 +58,7 @@ dependencies {
 // 手動散佈用：assembleDebug 之後把 APK 複製到 dist/ 並帶上版本號。
 // rename 用字串而不用 lambda：.kts 裡的 lambda 會捕獲建置腳本物件，
 // configuration cache 序列化不了（實際踩過）。
-val exportedApkName = "DouyinVideoDownloader-debug-v" + android.defaultConfig.versionName + ".apk"
+val exportedApkName = "DouKeeper-debug-v" + android.defaultConfig.versionName + ".apk"
 
 val exportDebugApk by tasks.registering(Copy::class) {
     from(layout.buildDirectory.file("outputs/apk/debug/app-debug.apk"))

@@ -1,10 +1,11 @@
-# 抖音下載器 — 規格與規劃書
+# DouKeeper — 規格與規劃書
 
 | 項目 | 內容 |
 |---|---|
-| 暫定名稱 | DouyinVideoDownloader（中文名待定） |
+| 名稱 | **DouKeeper**（2026-10-13 定案，各語言都用英文名。原暫名 DouyinVideoDownloader；DouSave／抖存 已有同類專案使用，放棄） |
+| Repository | `github.com/MrDaDaDo/DouKeeper`（private） |
 | Target Platform | Android Native (Kotlin) |
-| Package | `io.github.mrdadado.doukeeper`（暫定，見 §1.2 B1） |
+| Package | `io.github.mrdadado.doukeeper`（改名後**刻意不改**：改了手機會當成另一個 App，設定與紀錄都要重來） |
 | Doc Version | **v0.2.0** |
 | Last Updated | 2026-10-13 |
 | 發布方式 | **自用 / 側載 APK，不上架 Google Play**（理由見 §1.3） |
@@ -47,13 +48,13 @@
 |---|---|---|
 | 平台 | Android 原生 Kotlin | 工具鏈與建置環境已在本機實測可用 |
 | 發布方式 | **側載 APK** | 不上 Play。產物放 `dist/`，傳到手機安裝 |
-| 進入點 | **剪貼簿**：抖音「複製連結」→ 打開 App 自動讀取，或下拉通知欄點「抖音下載」磚塊 | 抖音的分享面板叫不出系統分享選單（B2 實測）。磚塊只負責把 App 叫到前面，剪貼簿由 App 拿到焦點後讀——背景服務讀不到剪貼簿 |
+| 進入點 | **剪貼簿**：抖音「複製連結」→ 打開 App 自動讀取，或下拉通知欄點「DouKeeper」磚塊 | 抖音的分享面板叫不出系統分享選單（B2 實測）。磚塊只負責把 App 叫到前面，剪貼簿由 App 拿到焦點後讀——背景服務讀不到剪貼簿 |
 | 其他進入點 | 系統分享選單（`ACTION_SEND`）、App 內手動貼上 | 分享選單留著給其他 App 或抖音日後改版；同一個連結只自動處理一次 |
 | 穩定性判斷 | App 記錄每次成敗（`files/attempts.tsv`），畫面顯示最近 50 次成功率 | 失敗時好時壞，密集測試本身會觸發風控，只能靠日常使用累積判斷 |
 | 下載內容 | 每次彈出選單讓使用者勾選 | 可複選：無浮水印影片、有浮水印影片、音軌、圖片（圖文作品才出現） |
 | 預設勾選 | 無浮水印影片（圖文作品則為全部圖片） | 可在設定改成「記住上次的選擇」或「不再詢問，直接下載」 |
 | 下載執行 | **`DownloadCenter`（process 層級佇列）＋ `DownloadService`（前景服務，dataSync）** | 解析留在畫面（需要 WebView、可能要人機驗證）；下載交給背景，切到別的 App 也繼續，通知欄顯示進度，完成後通知點一下開啟。沒用 WorkManager：只需要「撐住 process＋顯示進度」，不需要排程與重開機後續傳 |
-| 存放位置 | MediaStore：`Movies/DouyinVideoDownloader`、`Pictures/DouyinVideoDownloader`、`Music/DouyinVideoDownloader` | 相簿與音樂 App 直接看得到，不需要儲存權限（§5.D） |
+| 存放位置 | MediaStore：`Movies/DouKeeper`、`Pictures/DouKeeper`、`Music/DouKeeper` | 相簿與音樂 App 直接看得到，不需要儲存權限（§5.D） |
 | 音軌 | 從影片**重新封裝**出音訊為 `.m4a`，不轉檔 | 用 `MediaExtractor` + `MediaMuxer`，不引入 FFmpeg（§5.E） |
 | 背景音樂 | 另外下載作品標示的配樂網址（通常是 `.mp3`） | 與「音軌」不同：配樂是原曲，音軌是影片裡實際的聲音（含人聲） |
 | 下載紀錄 | Room 資料庫 | 可重開、分享、重新下載、刪除紀錄 |
@@ -64,7 +65,7 @@
 | 網路 | OkHttp | 下載檔案與短網址導向；需要自己控制 User-Agent 與重新導向 |
 | JSON | kotlinx.serialization（`JsonElement` 走訪） | 抖音的資料結構很大又常變，只取需要的欄位，不建完整資料類別 |
 | minSdk / targetSdk | **29** / 36 | 29（Android 10）起 MediaStore 可以寫入公用目錄而不需要儲存權限；自用專案不需要往下相容 |
-| 語言 | **English（預設）、繁體中文、简体中文** | `values/` 放英文當所有未匹配語言的歸宿，`values-b+zh+Hant/`（台港澳）、`values-b+zh+Hans/`（中新）。`locales_config.xml` 讓 Android 13+ 可在系統設定單獨切換。存放資料夾固定用英文 `DouyinVideoDownloader`（使用者決定），不跟著語言變，免得切換語言後檔案散在兩處；0.3.0 以前是「抖音下載」；`attempts.tsv` 的失敗原因固定英文，方便統計 |
+| 語言 | **English（預設）、繁體中文、简体中文** | `values/` 放英文當所有未匹配語言的歸宿，`values-b+zh+Hant/`（台港澳）、`values-b+zh+Hans/`（中新）。`locales_config.xml` 讓 Android 13+ 可在系統設定單獨切換。存放資料夾固定用英文 `DouKeeper`（跟 App 名稱一致），不跟著語言變，免得切換語言後檔案散在兩處；0.3.0 以前「抖音下載」、0.4–0.6 是 `DouyinVideoDownloader`；`attempts.tsv` 的失敗原因固定英文，方便統計 |
 | 簽章 | **仍然要產生自己的金鑰**（§9） | 側載也一樣：簽章不同就不能覆蓋安裝更新 |
 
 ### 1.2 待補資訊
@@ -231,7 +232,7 @@ data class Aweme(
   它說明抖音在對這個環境做風控評分；我們自稱 Windows Chrome、實際是 Linux ARM + 觸控 + 模擬器 GPU，
   這種矛盾很可能就是被要求驗證的原因。
 - 使用者重試，在放大的 WebView 裡**手動完成滑塊驗證** → 拿到 detail，
-  `作者_7600000000000000123.mp4` 存進 `Movies/DouyinVideoDownloader`，1,641,422 bytes，與桌面 curl 下載的完全相同。
+  `作者_7600000000000000123.mp4` 存進 `Movies/抖音下載`，1,641,422 bytes，與桌面 curl 下載的完全相同。
 - **緊接著分享第二支沒解析過的影片：沒有再要求驗證**，直接下載完成。
   那支是 8 分 37 秒的長影片（1440×1080 H.264，110MB），拉回電腦完整解碼無錯誤。
 
@@ -296,7 +297,7 @@ WebView 改成 `LAYER_TYPE_SOFTWARE` 後正常顯示。模擬器（Android 14）
 ### 5.E 音軌
 
 - 先下載無浮水印影片到 App 的快取目錄，用 `MediaExtractor` 找出音訊軌，
-  `MediaMuxer` 原封不動重新封裝成 `.m4a`，再寫入 `Music/DouyinVideoDownloader`。
+  `MediaMuxer` 原封不動重新封裝成 `.m4a`，再寫入 `Music/DouKeeper`。
 - **不轉檔**：抖音的音訊軌通常是 AAC，直接封裝不會損失音質，也不用 FFmpeg（APK 會大幾十 MB）。
 - 若同時勾了影片，就重用剛下載好的影片，不要再下載一次。
 - 音軌不是 AAC 的話（實測後確認是否會發生）→ 顯示錯誤，不默默輸出壞檔。
@@ -394,14 +395,14 @@ GitHub Actions：`assembleDebug` + `testDebugUnitTest`。沿用先前的專案�
 | 無浮水印 / 有浮水印影片下載 | 相簿看得到；無浮水印版實際播放確認無浮水印 | ⏳ |
 | 前景通知與進度 | 下載中滑掉 App，下載照樣完成 | ⏳ |
 | 中途失敗不留壞檔 | 下載到一半關網路，相簿裡沒有殘缺檔案 | ⏳ |
-| 圖文作品圖片 | 全部圖片依序存入 `Pictures/DouyinVideoDownloader` | ⏳ |
+| 圖文作品圖片 | 全部圖片依序存入 `Pictures/DouKeeper` | ⏳ |
 
 ### Phase 3 — 音訊
 
 | 任務 | 驗收標準 | 狀態 |
 |---|---|---|
 | 音軌（`.m4a` 重新封裝） | 音樂 App 可播放，長度與影片一致 | ⏳ |
-| 背景音樂 | 存入 `Music/DouyinVideoDownloader` | ⏳ |
+| 背景音樂 | 存入 `Music/DouKeeper` | ⏳ |
 | 同時勾影片與音軌只下載一次影片 | 網路流量只有一份影片大小 | ⏳ |
 
 ### Phase 4 — 紀錄與設定

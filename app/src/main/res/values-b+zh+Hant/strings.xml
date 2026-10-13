@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 繁體中文（台灣、香港、澳門）。key 與 values/strings.xml 一致。 -->
 <resources>
-    <string name="tile_label">抖音下載</string>
-    <string name="title">抖音下載</string>
     <string name="summary">最近 %1$d 次成功 %2$d 次</string>
 
     <string name="idle_title">等待連結</string>
-    <string name="idle_body">在抖音按「分享 → 複製連結」，再回到這裡就會自動開始。\n也可以下拉通知欄點「抖音下載」磚塊。</string>
+    <string name="idle_body">在抖音按「分享 → 複製連結」，再回到這裡就會自動開始。\n也可以下拉通知欄點「DouKeeper」磚塊。</string>
     <string name="step_reading_link">讀取連結</string>
     <string name="step_finding_video">尋找作品</string>
     <string name="step_fetching_details">取得作品資料</string>

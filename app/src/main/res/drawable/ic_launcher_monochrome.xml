@@ -1,25 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  App 圖示前景：朝下的「播放」三角形＋底下一條托盤線——播放鍵轉個方向就是下載箭頭。
-
-  自適應圖示是 108×108，只有中央直徑 66 的圓保證不被裁切（21–87），
-  符號落在 x 33–75、y 31–78 之內。
-  三角形用「填色＋同色圓角描邊」做出圓角：向量圖的 path 本身沒有圓角屬性。
-  這份是 Android 13 主題圖示的單色圖層（只看 alpha）。彩色圖示用的是
-  ic_launcher_foreground.xml（同一個符號加霓虹發光）；發光層放進單色圖示會糊成一團。
+  Android 13 主題圖示的單色圖層（只看 alpha）：書籤＋鏤空的播放三角，沒有錯位殘影。
+  彩色圖示是 ic_launcher_foreground.xml；錯位層放進單色圖示會變成一團模糊的外框。
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="7"
-        android:strokeLineJoin="round"
-        android:pathData="M37,36 L71,36 L54,61 Z" />
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M36.5,70.5 h35 a3.5,3.5 0 0 1 0,7 h-35 a3.5,3.5 0 0 1 0,-7 z" />
+    <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd"
+        android:pathData="M42,30 H66 A4,4 0 0 1 70,34 V80 L54,68 L38,80 V34 A4,4 0 0 1 42,30 Z M49,40 L49,58 L63,49 Z" />
 </vector>

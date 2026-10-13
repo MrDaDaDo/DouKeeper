@@ -21,5 +21,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "DouyinVideoDownloader"
+rootProject.name = "DouKeeper"
 include(":app")

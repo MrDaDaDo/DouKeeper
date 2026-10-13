@@ -102,8 +102,9 @@ class MediaStoreDownloader(
         /**
          * 存放的資料夾名稱。英文、而且**不跟著語言變**（使用者決定，2026-10-13）：
          * 跟著語言變的話，切換語言後檔案會散在兩個資料夾裡。
-         * 0.3.0 以前用的是「抖音下載」，舊檔案留在原處，不自動搬。
+         * 跟 App 名稱一致。歷史：0.3.0 以前「抖音下載」、0.4–0.6 是「DouyinVideoDownloader」，
+         * 舊檔案都留在原處，不自動搬。
          */
-        const val FOLDER = "DouyinVideoDownloader"
+        const val FOLDER = "DouKeeper"
     }
 }

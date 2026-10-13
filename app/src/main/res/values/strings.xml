@@ -6,14 +6,15 @@
   三份的 key 必須一致；新增字串時三份一起加。
 -->
 <resources>
-    <string name="app_name" translatable="false">DouyinVideoDownloader</string>
-    <string name="tile_label">Douyin Download</string>
-    <string name="title">Douyin Downloader</string>
+    <string name="app_name">DouKeeper</string>
+    <!-- 名稱各語言都用英文，中文檔不另外定義。 -->
+    <string name="tile_label">DouKeeper</string>
+    <string name="title">DouKeeper</string>
     <string name="summary">Last %1$d: %2$d succeeded</string>
 
     <!-- 狀態卡 -->
     <string name="idle_title">Waiting for a link</string>
-    <string name="idle_body">In Douyin, tap Share → Copy link, then come back here and it starts automatically.\nYou can also pull down the notification shade and tap the \"Douyin Download\" tile.</string>
+    <string name="idle_body">In Douyin, tap Share → Copy link, then come back here and it starts automatically.\nYou can also pull down the notification shade and tap the \"DouKeeper\" tile.</string>
     <string name="step_reading_link">Reading link</string>
     <string name="step_finding_video">Finding the video</string>
     <string name="step_fetching_details">Fetching video details</string>
